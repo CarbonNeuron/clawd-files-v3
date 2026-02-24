@@ -8,7 +8,6 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <ResourcePreloader />
     <link rel="stylesheet" href="@Assets["_content/MudBlazor/MudBlazor.min.css"]" />
-    <link rel="stylesheet" href="lib/hljs/github-dark.min.css" />
     <link rel="stylesheet" href="@Assets["app.css"]" />
     <link rel="stylesheet" href="@Assets["ClawdFiles.Web.styles.css"]" />
     <ImportMap />
@@ -19,29 +18,6 @@
     <Routes />
     <ReconnectModal />
     <script src="@Assets["_content/MudBlazor/MudBlazor.min.js"]"></script>
-    <script src="lib/hljs/highlight.min.js"></script>
-    <script>
-        function highlightAndAddLines() {
-            document.querySelectorAll('pre code[class*="language-"]').forEach(function (block) {
-                if (block.dataset.highlighted) return;
-                hljs.highlightElement(block);
-
-                var lineCount = block.textContent.split('\n').length;
-                if (block.textContent.endsWith('\n')) lineCount--;
-
-                var gutter = document.createElement('div');
-                gutter.className = 'hljs-line-numbers';
-                gutter.setAttribute('aria-hidden', 'true');
-                var nums = [];
-                for (var i = 1; i <= lineCount; i++) nums.push(i);
-                gutter.textContent = nums.join('\n');
-
-                var pre = block.parentElement;
-                pre.style.display = 'flex';
-                pre.insertBefore(gutter, block);
-            });
-        }
-    </script>
     <script src="@Assets["_framework/blazor.web.js"]"></script>
 </body>
 

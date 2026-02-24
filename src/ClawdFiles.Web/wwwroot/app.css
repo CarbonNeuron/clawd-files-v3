@@ -991,6 +991,7 @@ h1:focus { outline: none; }
     overflow-y: auto;
 }
 .code-preview pre {
+    display: flex;
     margin: 0;
     padding: 1rem;
     overflow-x: auto;
@@ -998,8 +999,6 @@ h1:focus { outline: none; }
     font-family: var(--font-mono);
     font-size: 0.875rem;
     line-height: 1.5;
-    white-space: pre-wrap;
-    word-wrap: break-word;
 }
 .code-preview code {
     font-family: var(--font-mono);
@@ -1008,7 +1007,7 @@ h1:focus { outline: none; }
     flex: 1;
     min-width: 0;
 }
-.hljs-line-numbers {
+.code-line-numbers {
     flex-shrink: 0;
     padding-right: 1rem;
     text-align: right;

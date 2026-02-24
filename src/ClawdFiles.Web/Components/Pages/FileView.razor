@@ -1,9 +1,11 @@
 @page "/{BucketId}/{*FilePath}"
 @using ClawdFiles.Application.Interfaces
 @using Markdig
+@using TextMateSharp.Grammars
+@using TextMateSharp.Registry
+@using TextMateSharp.Themes
 @inject IFileHeaderRepository FileRepo
 @inject IFileStorage FileStorage
-@inject IJSRuntime JS
 @rendermode InteractiveServer
 
 <PageTitle>@FilePath</PageTitle>
@@ -106,7 +108,10 @@
 
                 case PreviewKind.Code:
                     <div class="code-preview">
-                        <pre><code class="language-@codeLanguageHint">@codeContent</code></pre>
+                        <pre>
+                            <div class="code-line-numbers" aria-hidden="true">@lineNumbers</div>
+                            <code>@((MarkupString)renderedHtml)</code>
+                        </pre>
                     </div>
                     break;
 
@@ -134,14 +139,16 @@
 </div>
 
 @code {
+    private static readonly RegistryOptions s_options = new(ThemeName.Dracula);
+    private static readonly Registry s_registry = new(s_options);
+
     [Parameter] public string BucketId { get; set; } = "";
     [Parameter] public string FilePath { get; set; } = "";
     private ClawdFiles.Domain.Entities.BucketFileHeader? fileHeader;
 
     private PreviewKind previewKind = PreviewKind.None;
     private string renderedHtml = "";
-    private string codeContent = "";
-    private string codeLanguageHint = "";
+    private string lineNumbers = "";
     private List<string[]> csvRows = new();
 
     private const long MaxPreviewBytes = 1024 * 1024; // 1 MB
@@ -176,18 +183,12 @@
                     csvRows = ParseCsv(content);
                     break;
                 case PreviewKind.Code:
-                    codeContent = content;
-                    codeLanguageHint = GetLanguageHint(fileHeader.Path);
+                    renderedHtml = HighlightCode(content, fileHeader.Path);
+                    var lineCount = content.Split('\n').Length;
+                    if (content.EndsWith('\n')) lineCount--;
+                    lineNumbers = string.Join("\n", Enumerable.Range(1, lineCount));
                     break;
             }
-        }
-    }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender && previewKind is PreviewKind.Code or PreviewKind.Markdown)
-        {
-            await JS.InvokeVoidAsync("highlightAndAddLines");
         }
     }
 
@@ -201,60 +202,142 @@
 
         if (ext == ".md" || contentType == "text/markdown") return PreviewKind.Markdown;
         if (ext == ".csv" || contentType == "text/csv") return PreviewKind.Csv;
-        if (IsCodeExtension(ext)) return PreviewKind.Code;
+
+        if (!string.IsNullOrEmpty(ext))
+        {
+            try
+            {
+                var scope = s_options.GetScopeByExtension(ext);
+                if (!string.IsNullOrEmpty(scope)) return PreviewKind.Code;
+            }
+            catch { }
+        }
 
         return PreviewKind.None;
     }
 
-    private static bool IsCodeExtension(string ext) => ext switch
-    {
-        ".cs" or ".js" or ".ts" or ".tsx" or ".jsx" or ".py" or ".sql" or ".json"
-        or ".xml" or ".yaml" or ".yml" or ".css" or ".html" or ".htm" or ".java"
-        or ".cpp" or ".cc" or ".cxx" or ".h" or ".hpp" or ".c" or ".php"
-        or ".rb" or ".go" or ".rs" or ".swift" or ".kt" or ".scala"
-        or ".sh" or ".bash" or ".ps1" or ".psm1" or ".fs" or ".fsx"
-        or ".vb" or ".lua" or ".r" or ".toml" or ".ini" or ".conf"
-        or ".dockerfile" or ".tf" or ".hcl" => true,
-        _ => false
-    };
-
-    private static string GetLanguageHint(string path)
+    private static string HighlightCode(string content, string path)
     {
         var ext = System.IO.Path.GetExtension(path)?.ToLowerInvariant() ?? "";
-        return ext switch
+        string? scope = null;
+        try { scope = s_options.GetScopeByExtension(ext); } catch { }
+
+        if (string.IsNullOrEmpty(scope))
+            return System.Net.WebUtility.HtmlEncode(content);
+
+        var grammar = s_registry.LoadGrammar(scope);
+        var theme = s_registry.GetTheme();
+        var sb = new System.Text.StringBuilder();
+        var lines = content.Split('\n');
+        IStateStack? ruleStack = null;
+
+        for (int i = 0; i < lines.Length; i++)
         {
-            ".cs" => "csharp",
-            ".js" or ".jsx" => "javascript",
-            ".ts" or ".tsx" => "typescript",
-            ".py" => "python",
-            ".rb" => "ruby",
-            ".go" => "go",
-            ".rs" => "rust",
-            ".java" => "java",
-            ".cpp" or ".cc" or ".cxx" or ".hpp" => "cpp",
-            ".c" or ".h" => "c",
-            ".php" => "php",
-            ".sql" => "sql",
-            ".json" => "json",
-            ".xml" => "xml",
-            ".yaml" or ".yml" => "yaml",
-            ".css" => "css",
-            ".html" or ".htm" => "html",
-            ".sh" or ".bash" => "bash",
-            ".ps1" or ".psm1" => "powershell",
-            ".fs" or ".fsx" => "fsharp",
-            ".vb" => "vbnet",
-            ".swift" => "swift",
-            ".kt" => "kotlin",
-            ".scala" => "scala",
-            ".lua" => "lua",
-            ".r" => "r",
-            ".toml" => "toml",
-            ".ini" or ".conf" => "ini",
-            ".dockerfile" => "dockerfile",
-            ".tf" or ".hcl" => "hcl",
-            _ => "text"
-        };
+            var line = lines[i];
+            if (i > 0) sb.Append('\n');
+
+            if (line.Length == 0) continue;
+
+            var result = grammar.TokenizeLine(line, ruleStack, TimeSpan.MaxValue);
+            ruleStack = result.RuleStack;
+
+            foreach (var token in result.Tokens)
+            {
+                var startIndex = Math.Min(token.StartIndex, line.Length);
+                var endIndex = Math.Min(token.EndIndex, line.Length);
+                if (startIndex >= endIndex) continue;
+
+                var tokenText = line[startIndex..endIndex];
+                var fg = ResolveColor(theme, token.Scopes);
+
+                if (fg is not null)
+                    sb.Append($"<span style=\"color:{fg}\">{System.Net.WebUtility.HtmlEncode(tokenText)}</span>");
+                else
+                    sb.Append(System.Net.WebUtility.HtmlEncode(tokenText));
+            }
+        }
+
+        return sb.ToString();
+    }
+
+    private static string? ResolveColor(Theme theme, IList<string> scopes)
+    {
+        string? fg = null;
+        var rules = theme.Match(scopes);
+        foreach (var rule in rules)
+        {
+            var color = theme.GetColor(rule.foreground);
+            if (!string.IsNullOrEmpty(color))
+                fg = color;
+        }
+        return fg;
+    }
+
+    private static string RenderMarkdown(string markdown)
+    {
+        var pipeline = new MarkdownPipelineBuilder()
+            .DisableHtml()
+            .UseAdvancedExtensions()
+            .Build();
+
+        var html = Markdown.ToHtml(markdown, pipeline);
+        html = HighlightMarkdownCodeBlocks(html);
+        return html;
+    }
+
+    private static string HighlightMarkdownCodeBlocks(string html)
+    {
+        var pattern = new System.Text.RegularExpressions.Regex(
+            @"<pre><code\s+class=""language-(\w+)"">([^<]*(?:<(?!/code>)[^<]*)*)</code></pre>",
+            System.Text.RegularExpressions.RegexOptions.Singleline);
+
+        return pattern.Replace(html, match =>
+        {
+            var langHint = match.Groups[1].Value;
+            var code = System.Net.WebUtility.HtmlDecode(match.Groups[2].Value);
+
+            string? scope = null;
+            try { scope = s_options.GetScopeByExtension("." + langHint); } catch { }
+            if (string.IsNullOrEmpty(scope))
+            {
+                try { scope = s_options.GetScopeByLanguageId(langHint); } catch { }
+            }
+            if (string.IsNullOrEmpty(scope)) return match.Value;
+
+            var grammar = s_registry.LoadGrammar(scope);
+            var theme = s_registry.GetTheme();
+            var sb = new System.Text.StringBuilder();
+            var lines = code.Split('\n');
+            IStateStack? ruleStack = null;
+
+            sb.Append("<pre><code>");
+            for (int i = 0; i < lines.Length; i++)
+            {
+                var line = lines[i];
+                if (i > 0) sb.Append('\n');
+                if (line.Length == 0) continue;
+
+                var result = grammar.TokenizeLine(line, ruleStack, TimeSpan.MaxValue);
+                ruleStack = result.RuleStack;
+
+                foreach (var token in result.Tokens)
+                {
+                    var startIndex = Math.Min(token.StartIndex, line.Length);
+                    var endIndex = Math.Min(token.EndIndex, line.Length);
+                    if (startIndex >= endIndex) continue;
+
+                    var tokenText = line[startIndex..endIndex];
+                    var fg = ResolveColor(theme, token.Scopes);
+
+                    if (fg is not null)
+                        sb.Append($"<span style=\"color:{fg}\">{System.Net.WebUtility.HtmlEncode(tokenText)}</span>");
+                    else
+                        sb.Append(System.Net.WebUtility.HtmlEncode(tokenText));
+                }
+            }
+            sb.Append("</code></pre>");
+            return sb.ToString();
+        });
     }
 
     private async Task<string?> LoadTextContentAsync()
@@ -265,16 +348,6 @@
         var buffer = new char[MaxPreviewBytes];
         var read = await reader.ReadBlockAsync(buffer, 0, buffer.Length);
         return new string(buffer, 0, read);
-    }
-
-    private static string RenderMarkdown(string markdown)
-    {
-        var pipeline = new MarkdownPipelineBuilder()
-            .DisableHtml()
-            .UseAdvancedExtensions()
-            .Build();
-
-        return Markdown.ToHtml(markdown, pipeline);
     }
 
     private static List<string[]> ParseCsv(string content)

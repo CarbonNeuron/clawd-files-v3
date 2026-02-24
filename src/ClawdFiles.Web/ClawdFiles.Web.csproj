@@ -16,6 +16,8 @@
     <PackageReference Include="MudBlazor" Version="9.0.0" />
     <PackageReference Include="Scalar.AspNetCore" Version="2.12.47" />
     <PackageReference Include="Scalar.AspNetCore.Microsoft" Version="2.12.47" />
+    <PackageReference Include="TextMateSharp" Version="1.0.70" />
+    <PackageReference Include="TextMateSharp.Grammars" Version="1.0.69" />
   </ItemGroup>
 
   <PropertyGroup>
