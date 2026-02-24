@@ -4,6 +4,7 @@ using ClawdFiles.Infrastructure.Data;
 using ClawdFiles.Web.Authentication;
 using ClawdFiles.Web.Components;
 using Microsoft.EntityFrameworkCore;
+using MudBlazor.Services;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -25,6 +26,9 @@ builder.Services.AddAuthorization();
 
 // API controllers
 builder.Services.AddControllers();
+
+// MudBlazor
+builder.Services.AddMudServices();
 
 // Blazor
 builder.Services.AddRazorComponents()
@@ -50,7 +54,7 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseStaticFiles();
+app.MapStaticAssets();
 app.UseAntiforgery();
 app.UseAuthentication();
 app.UseAuthorization();

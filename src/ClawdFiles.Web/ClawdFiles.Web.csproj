@@ -12,6 +12,7 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.3" />
+    <PackageReference Include="MudBlazor" Version="9.0.0" />
     <PackageReference Include="Scalar.AspNetCore" Version="2.12.47" />
     <PackageReference Include="Scalar.AspNetCore.Microsoft" Version="2.12.47" />
   </ItemGroup>

@@ -5,26 +5,48 @@
 
 <PageTitle>@FilePath</PageTitle>
 
-@if (fileHeader is null)
-{
-    <p>File not found.</p>
-}
-else
-{
-    <h1>@fileHeader.Path</h1>
-    <div class="file-meta">
-        <span>Type: @fileHeader.ContentType</span>
-        <span> | Size: @FormatSize(fileHeader.SizeBytes)</span>
-        <span> | Uploaded: @fileHeader.UploadedAt.ToString("u")</span>
-        <span> | Short URL: <a href="/s/@fileHeader.ShortCode">/s/@fileHeader.ShortCode</a></span>
-    </div>
-    @if (fileHeader.ContentType.StartsWith("image/"))
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-8">
+    @if (fileHeader is null)
     {
-        <img src="/raw/@BucketId/@FilePath" alt="@fileHeader.Path" style="max-width: 100%;" />
+        <MudText Typo="Typo.body1">File not found.</MudText>
     }
-    <p><a href="/raw/@BucketId/@FilePath">Download</a></p>
-    <p><a href="/@BucketId">Back to bucket</a></p>
-}
+    else
+    {
+        <MudText Typo="Typo.h4" GutterBottom="true">@fileHeader.Path</MudText>
+        <div class="d-flex flex-wrap gap-2 mb-4">
+            <MudChip T="string" Color="Color.Default">Type: @fileHeader.ContentType</MudChip>
+            <MudChip T="string" Color="Color.Default">Size: @FormatSize(fileHeader.SizeBytes)</MudChip>
+            <MudChip T="string" Color="Color.Default">Uploaded: @fileHeader.UploadedAt.ToString("u")</MudChip>
+            <MudChip T="string" Color="Color.Info">
+                Short URL: <MudLink Href="@($"/s/{fileHeader.ShortCode}")">/s/@fileHeader.ShortCode</MudLink>
+            </MudChip>
+        </div>
+
+        @if (fileHeader.ContentType.StartsWith("image/"))
+        {
+            <MudImage Src="@($"/raw/{BucketId}/{FilePath}")"
+                      Alt="@fileHeader.Path"
+                      Fluid="true"
+                      Elevation="1"
+                      Class="mb-4" />
+        }
+
+        <div class="d-flex gap-2">
+            <MudButton Href="@($"/raw/{BucketId}/{FilePath}")"
+                       Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.Download">
+                Download
+            </MudButton>
+            <MudButton Href="@($"/{BucketId}")"
+                       Variant="Variant.Outlined"
+                       Color="Color.Default"
+                       StartIcon="@Icons.Material.Filled.ArrowBack">
+                Back to bucket
+            </MudButton>
+        </div>
+    }
+</MudContainer>
 
 @code {
     [Parameter] public string BucketId { get; set; } = "";

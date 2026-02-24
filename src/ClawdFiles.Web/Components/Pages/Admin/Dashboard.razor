@@ -6,53 +6,73 @@
 
 <PageTitle>Admin Dashboard</PageTitle>
 
-<h1>Admin Dashboard</h1>
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-8">
+    <MudText Typo="Typo.h3" GutterBottom="true">Admin Dashboard</MudText>
 
-<h2>API Keys</h2>
-@if (keys is null)
-{
-    <p>Loading...</p>
-}
-else
-{
-    <table>
-        <thead><tr><th>Prefix</th><th>Name</th><th>Created</th><th>Last Used</th><th>Buckets</th></tr></thead>
-        <tbody>
-            @foreach (var key in keys)
-            {
+    <MudText Typo="Typo.h5" GutterBottom="true">API Keys</MudText>
+    @if (keys is null)
+    {
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+    }
+    else
+    {
+        <MudSimpleTable Elevation="1" Hover="true" Dense="true" Class="mb-8">
+            <thead>
                 <tr>
-                    <td>@key.Prefix</td><td>@key.Name</td>
-                    <td>@key.CreatedAt.ToString("u")</td>
-                    <td>@(key.LastUsedAt?.ToString("u") ?? "Never")</td>
-                    <td>@key.BucketCount</td>
+                    <th>Prefix</th>
+                    <th>Name</th>
+                    <th>Created</th>
+                    <th>Last Used</th>
+                    <th>Buckets</th>
                 </tr>
-            }
-        </tbody>
-    </table>
-}
+            </thead>
+            <tbody>
+                @foreach (var key in keys)
+                {
+                    <tr>
+                        <td>@key.Prefix</td>
+                        <td>@key.Name</td>
+                        <td>@key.CreatedAt.ToString("u")</td>
+                        <td>@(key.LastUsedAt?.ToString("u") ?? "Never")</td>
+                        <td>@key.BucketCount</td>
+                    </tr>
+                }
+            </tbody>
+        </MudSimpleTable>
+    }
 
-<h2>All Buckets</h2>
-@if (buckets is null)
-{
-    <p>Loading...</p>
-}
-else
-{
-    <table>
-        <thead><tr><th>ID</th><th>Name</th><th>Files</th><th>Created</th><th>Expires</th></tr></thead>
-        <tbody>
-            @foreach (var b in buckets)
-            {
+    <MudText Typo="Typo.h5" GutterBottom="true">All Buckets</MudText>
+    @if (buckets is null)
+    {
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+    }
+    else
+    {
+        <MudSimpleTable Elevation="1" Hover="true" Dense="true">
+            <thead>
                 <tr>
-                    <td><a href="/@b.Id">@b.Id</a></td><td>@b.Name</td>
-                    <td>@b.FileCount</td>
-                    <td>@b.CreatedAt.ToString("u")</td>
-                    <td>@(b.ExpiresAt?.ToString("u") ?? "Never")</td>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Files</th>
+                    <th>Created</th>
+                    <th>Expires</th>
                 </tr>
-            }
-        </tbody>
-    </table>
-}
+            </thead>
+            <tbody>
+                @foreach (var b in buckets)
+                {
+                    <tr>
+                        <td><MudLink Href="@($"/{b.Id}")">@b.Id</MudLink></td>
+                        <td>@b.Name</td>
+                        <td>@b.FileCount</td>
+                        <td>@b.CreatedAt.ToString("u")</td>
+                        <td>@(b.ExpiresAt?.ToString("u") ?? "Never")</td>
+                    </tr>
+                }
+            </tbody>
+        </MudSimpleTable>
+    }
+</MudContainer>
 
 @code {
     private List<ClawdFiles.Application.DTOs.KeyInfoResponse>? keys;

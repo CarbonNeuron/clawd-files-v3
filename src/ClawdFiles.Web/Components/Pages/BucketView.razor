@@ -5,53 +5,71 @@
 
 <PageTitle>@(bucket?.Name ?? "Bucket")</PageTitle>
 
-@if (bucket is null)
-{
-    <p>Loading...</p>
-}
-else
-{
-    <h1>@bucket.Name</h1>
-    @if (!string.IsNullOrEmpty(bucket.Description))
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-8">
+    @if (bucket is null)
     {
-        <p>@bucket.Description</p>
-    }
-    <div class="bucket-meta">
-        <span>ID: @bucket.Id</span>
-        @if (!string.IsNullOrEmpty(bucket.Purpose))
-        {
-            <span> | Purpose: @bucket.Purpose</span>
-        }
-        <span> | Created: @bucket.CreatedAt.ToString("u")</span>
-        @if (bucket.ExpiresAt.HasValue)
-        {
-            <span> | Expires: @bucket.ExpiresAt.Value.ToString("u")</span>
-        }
-    </div>
-    <h2>Files (@bucket.Files.Count)</h2>
-    @if (bucket.Files.Count == 0)
-    {
-        <p>No files in this bucket.</p>
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
     }
     else
     {
-        <table>
-            <thead><tr><th>Path</th><th>Type</th><th>Size</th><th>Actions</th></tr></thead>
-            <tbody>
-                @foreach (var file in bucket.Files)
-                {
+        <MudText Typo="Typo.h3" GutterBottom="true">@bucket.Name</MudText>
+        @if (!string.IsNullOrEmpty(bucket.Description))
+        {
+            <MudText Typo="Typo.body1" Class="mb-4">@bucket.Description</MudText>
+        }
+        <div class="d-flex flex-wrap gap-2 mb-4">
+            <MudChip T="string" Color="Color.Default">ID: @bucket.Id</MudChip>
+            @if (!string.IsNullOrEmpty(bucket.Purpose))
+            {
+                <MudChip T="string" Color="Color.Info">Purpose: @bucket.Purpose</MudChip>
+            }
+            <MudChip T="string" Color="Color.Default">Created: @bucket.CreatedAt.ToString("u")</MudChip>
+            @if (bucket.ExpiresAt.HasValue)
+            {
+                <MudChip T="string" Color="Color.Warning">Expires: @bucket.ExpiresAt.Value.ToString("u")</MudChip>
+            }
+        </div>
+
+        <MudText Typo="Typo.h5" GutterBottom="true">Files (@bucket.Files.Count)</MudText>
+
+        @if (bucket.Files.Count == 0)
+        {
+            <MudText Typo="Typo.body1">No files in this bucket.</MudText>
+        }
+        else
+        {
+            <MudSimpleTable Elevation="1" Hover="true" Dense="true">
+                <thead>
                     <tr>
-                        <td><a href="/@bucket.Id/@file.Path">@file.Path</a></td>
-                        <td>@file.ContentType</td>
-                        <td>@FormatSize(file.SizeBytes)</td>
-                        <td><a href="/raw/@bucket.Id/@file.Path">Download</a></td>
+                        <th>Path</th>
+                        <th>Type</th>
+                        <th>Size</th>
+                        <th>Actions</th>
                     </tr>
-                }
-            </tbody>
-        </table>
-        <p><a href="/api/buckets/@bucket.Id/zip">Download all as ZIP</a></p>
+                </thead>
+                <tbody>
+                    @foreach (var file in bucket.Files)
+                    {
+                        <tr>
+                            <td><MudLink Href="@($"/{bucket.Id}/{file.Path}")">@file.Path</MudLink></td>
+                            <td>@file.ContentType</td>
+                            <td>@FormatSize(file.SizeBytes)</td>
+                            <td><MudLink Href="@($"/raw/{bucket.Id}/{file.Path}")">Download</MudLink></td>
+                        </tr>
+                    }
+                </tbody>
+            </MudSimpleTable>
+
+            <MudButton Href="@($"/api/buckets/{bucket.Id}/zip")"
+                       Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.Download"
+                       Class="mt-4">
+                Download all as ZIP
+            </MudButton>
+        }
     }
-}
+</MudContainer>
 
 @code {
     [Parameter] public string BucketId { get; set; } = "";
