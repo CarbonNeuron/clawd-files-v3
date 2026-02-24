@@ -2,13 +2,12 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
-# Copy solution and project files first for layer caching
-COPY ClawdFiles.slnx .
+# Copy project files first for layer caching
 COPY src/ClawdFiles.Domain/ClawdFiles.Domain.csproj src/ClawdFiles.Domain/
 COPY src/ClawdFiles.Application/ClawdFiles.Application.csproj src/ClawdFiles.Application/
 COPY src/ClawdFiles.Infrastructure/ClawdFiles.Infrastructure.csproj src/ClawdFiles.Infrastructure/
 COPY src/ClawdFiles.Web/ClawdFiles.Web.csproj src/ClawdFiles.Web/
-RUN dotnet restore
+RUN dotnet restore src/ClawdFiles.Web/ClawdFiles.Web.csproj
 
 # Copy source and publish
 COPY src/ src/
