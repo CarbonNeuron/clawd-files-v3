@@ -2,7 +2,7 @@
 @using TextMateSharp.Registry
 @using TextMateSharp.Themes
 
-<div class="code-preview">
+<div class="code-preview" style="background:@s_bg; color:@s_fg;">
     <div class="code-preview-header">
         <div class="code-preview-dots">
             <span class="code-preview-dot code-preview-dot--amber"></span>
@@ -11,15 +11,34 @@
         </div>
         <span class="code-preview-filename">@Filename</span>
     </div>
-    <pre>
-        <div class="code-line-numbers" aria-hidden="true">@lineNumbers</div>
-        <code>@((MarkupString)highlightedHtml)</code>
+    <pre style="background:@s_bg;">
+        <div class="code-line-numbers" style="color:@s_lineNr;" aria-hidden="true">@lineNumbers</div>
+        <code style="color:@s_fg;">@((MarkupString)highlightedHtml)</code>
     </pre>
 </div>
 
 @code {
-    private static readonly RegistryOptions s_options = new(ThemeName.DarkPlus);
+    private static readonly RegistryOptions s_options = new(ThemeName.Dracula);
     private static readonly Registry s_registry = new(s_options);
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<(int hash, string ext), string> s_cache = new();
+
+    private static readonly string s_bg;
+    private static readonly string s_fg;
+    private static readonly string s_lineNr;
+
+    static CodePreview()
+    {
+        var guiColors = s_registry.GetTheme().GetGuiColorDictionary();
+        s_bg = guiColors.GetValueOrDefault("editor.background", "#282a36");
+        s_fg = guiColors.GetValueOrDefault("editor.foreground", "#f8f8f2");
+        s_lineNr = guiColors.GetValueOrDefault("editor.lineNumber.foreground", "#6272a4");
+    }
+
+    /// <summary>Background color from the current theme.</summary>
+    public static string ThemeBackground => s_bg;
+
+    /// <summary>Foreground color from the current theme.</summary>
+    public static string ThemeForeground => s_fg;
 
     [Parameter] public string Content { get; set; } = "";
     [Parameter] public string FilePath { get; set; } = "";
@@ -58,8 +77,15 @@
 
     /// <summary>
     /// Highlights code content using an already-resolved TextMate scope.
+    /// Results are cached by content hash + scope.
     /// </summary>
     public static string HighlightWithScope(string content, string scope)
+    {
+        var key = (content.GetHashCode(), scope);
+        return s_cache.GetOrAdd(key, _ => HighlightCore(content, scope));
+    }
+
+    private static string HighlightCore(string content, string scope)
     {
         var grammar = s_registry.LoadGrammar(scope);
         var theme = s_registry.GetTheme();

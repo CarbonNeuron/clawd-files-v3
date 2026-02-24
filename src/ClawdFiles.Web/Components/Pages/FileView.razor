@@ -218,7 +218,7 @@
             if (string.IsNullOrEmpty(scope)) return match.Value;
 
             var highlighted = CodePreview.HighlightWithScope(code, scope);
-            return $"<pre><code>{highlighted}</code></pre>";
+            return $"<pre style=\"background:{CodePreview.ThemeBackground}\"><code style=\"color:{CodePreview.ThemeForeground}\">{highlighted}</code></pre>";
         });
     }
 

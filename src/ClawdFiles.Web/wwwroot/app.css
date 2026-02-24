@@ -911,7 +911,7 @@ h1:focus { outline: none; }
     color: var(--abyss-amber);
 }
 .markdown-preview pre {
-    background: #1e1e1e;
+    background: var(--abyss-surface);
     border: 1px solid var(--abyss-border);
     border-radius: 0.5rem;
     padding: 1rem;
@@ -925,7 +925,7 @@ h1:focus { outline: none; }
     border: none;
     padding: 0;
     font-size: 0.875rem;
-    color: #d4d4d4;
+    color: var(--abyss-text);
 }
 .markdown-preview blockquote {
     border-left: 3px solid var(--abyss-cyan-dim);
@@ -1019,22 +1019,20 @@ h1:focus { outline: none; }
     border-bottom: none;
 }
 
-/* Code preview — uses DarkPlus theme colors */
+/* Code preview — background/foreground set inline from theme */
 .code-preview {
-    background: #1e1e1e;
     border: 1px solid var(--abyss-border);
     border-radius: 0.5rem;
     overflow: hidden;
     max-height: 700px;
     overflow-y: auto;
-    color: #d4d4d4;
 }
 .code-preview-header {
     display: flex;
     align-items: center;
     gap: 10px;
     padding: 10px 14px;
-    background: rgba(30, 30, 30, 0.8);
+    background: rgba(0, 0, 0, 0.2);
     border-bottom: 1px solid var(--abyss-border);
 }
 .code-preview-dots {
@@ -1067,7 +1065,6 @@ h1:focus { outline: none; }
     margin: 0;
     padding: 1rem;
     overflow-x: auto;
-    background: #1e1e1e !important;
     font-family: var(--font-mono);
     font-size: 0.875rem;
     line-height: 1.5;
@@ -1078,13 +1075,11 @@ h1:focus { outline: none; }
     padding: 0;
     flex: 1;
     min-width: 0;
-    color: #d4d4d4;
 }
 .code-line-numbers {
     flex-shrink: 0;
     padding-right: 1rem;
     text-align: right;
-    color: #858585;
     user-select: none;
     font-family: var(--font-mono);
     font-size: 0.875rem;
