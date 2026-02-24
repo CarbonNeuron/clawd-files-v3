@@ -1,18 +1,78 @@
 @inherits LayoutComponentBase
 
-<MudThemeProvider />
+<MudThemeProvider Theme="AbyssalTheme" IsDarkMode="true" />
 <MudPopoverProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
 
 <MudLayout>
-    <MudAppBar Elevation="1">
-        <MudText Typo="Typo.h6">Clawd Files</MudText>
+    <MudAppBar Elevation="0" Dense="true">
+        <a href="/" class="station-brand">
+            <span class="station-brand-icon">CF</span>
+            <span>
+                <span class="station-brand-text">Clawd Files</span>
+            </span>
+        </a>
         <MudSpacer />
-        <MudButton Href="/" Color="Color.Inherit">Home</MudButton>
-        <MudButton Href="/admin" Color="Color.Inherit">Admin</MudButton>
+        <span class="depth-indicator">Station Online</span>
+        <a href="/" class="appbar-nav ml-4">Home</a>
+        <a href="/admin" class="appbar-nav">Admin</a>
     </MudAppBar>
     <MudMainContent>
-        @Body
+        <div style="max-width: 1100px; margin: 0 auto; padding: 0 24px;">
+            @Body
+            <footer class="station-footer">
+                <span>ABYSSAL STATION <span class="station-footer-crab" title="It's a crab.">🦀</span> CLAWD FILES</span>
+            </footer>
+        </div>
     </MudMainContent>
 </MudLayout>
+
+@code {
+    private static readonly MudTheme AbyssalTheme = new()
+    {
+        PaletteDark = new PaletteDark()
+        {
+            Black = "#06090f",
+            Background = "#06090f",
+            Surface = "#0d1520",
+            AppbarBackground = "#0d1520",
+            AppbarText = "#e2e8f0",
+            DrawerBackground = "#0d1520",
+            DrawerText = "#e2e8f0",
+            Primary = "#22d3ee",
+            Secondary = "#f97316",
+            Tertiary = "#64748b",
+            Info = "#22d3ee",
+            Warning = "#f97316",
+            Error = "#ef4444",
+            Success = "#22c55e",
+            TextPrimary = "#e2e8f0",
+            TextSecondary = "#94a3b8",
+            TextDisabled = "#475569",
+            ActionDefault = "#94a3b8",
+            ActionDisabled = "#334155",
+            LinesDefault = "#1a2d40",
+            LinesInputs = "#1a2d40",
+            Divider = "#1a2d40",
+            TableLines = "#1a2d40",
+            TableHover = "rgba(34, 211, 238, 0.04)",
+            HoverOpacity = 0.06,
+        },
+        Typography = new Typography()
+        {
+            Default = new DefaultTypography()
+            {
+                FontFamily = ["ui-sans-serif", "system-ui", "-apple-system", "sans-serif"]
+            },
+            H3 = new H3Typography() { FontFamily = ["ui-monospace", "Cascadia Code", "SF Mono", "Menlo", "monospace"] },
+            H4 = new H4Typography() { FontFamily = ["ui-monospace", "Cascadia Code", "SF Mono", "Menlo", "monospace"] },
+            H5 = new H5Typography() { FontFamily = ["ui-monospace", "Cascadia Code", "SF Mono", "Menlo", "monospace"] },
+            H6 = new H6Typography() { FontFamily = ["ui-monospace", "Cascadia Code", "SF Mono", "Menlo", "monospace"] },
+        },
+        LayoutProperties = new LayoutProperties()
+        {
+            DefaultBorderRadius = "6px",
+        }
+    };
+}

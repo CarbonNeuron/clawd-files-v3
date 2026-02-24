@@ -1,8 +1,15 @@
 @page "/not-found"
 @layout MainLayout
 
-<MudContainer MaxWidth="MaxWidth.Small" Class="mt-16 d-flex flex-column align-center">
-    <MudIcon Icon="@Icons.Material.Filled.SearchOff" Size="Size.Large" Color="Color.Secondary" />
-    <MudText Typo="Typo.h4" Class="mt-4" GutterBottom="true">Not Found</MudText>
-    <MudText Typo="Typo.body1">Sorry, the content you are looking for does not exist.</MudText>
-</MudContainer>
+<div style="padding-top: 80px; text-align: center;">
+    <div style="font-size: 3rem; margin-bottom: 16px; color: var(--abyss-muted); opacity: 0.5;">
+        <MudIcon Icon="@Icons.Material.Filled.SignalWifiBad" Style="font-size: 3rem;" />
+    </div>
+    <h1 class="hero-title" style="font-size: 1.6rem !important; margin-bottom: 8px;">Signal Lost</h1>
+    <p style="color: var(--abyss-muted); font-family: var(--font-mono); font-size: 0.85rem; margin-bottom: 24px;">
+        The requested resource could not be located at this depth.
+    </p>
+    <MudButton Href="/" Variant="Variant.Outlined" Color="Color.Default">
+        Return to surface
+    </MudButton>
+</div>

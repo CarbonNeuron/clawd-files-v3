@@ -6,73 +6,93 @@
 
 <PageTitle>Admin Dashboard</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.Large" Class="mt-8">
-    <MudText Typo="Typo.h3" GutterBottom="true">Admin Dashboard</MudText>
+<div style="padding-top: 40px;">
+    <div class="breadcrumb-path anim-fade-in">
+        <a href="/">home</a>
+        <span class="breadcrumb-path-sep">/</span>
+        <span>admin</span>
+    </div>
 
-    <MudText Typo="Typo.h5" GutterBottom="true">API Keys</MudText>
-    @if (keys is null)
-    {
-        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
-    }
-    else
-    {
-        <MudSimpleTable Elevation="1" Hover="true" Dense="true" Class="mb-8">
-            <thead>
-                <tr>
-                    <th>Prefix</th>
-                    <th>Name</th>
-                    <th>Created</th>
-                    <th>Last Used</th>
-                    <th>Buckets</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var key in keys)
-                {
-                    <tr>
-                        <td>@key.Prefix</td>
-                        <td>@key.Name</td>
-                        <td>@key.CreatedAt.ToString("u")</td>
-                        <td>@(key.LastUsedAt?.ToString("u") ?? "Never")</td>
-                        <td>@key.BucketCount</td>
-                    </tr>
-                }
-            </tbody>
-        </MudSimpleTable>
-    }
+    <h1 class="hero-title anim-fade-in" style="font-size: 1.8rem !important; margin-bottom: 32px;">Station Control</h1>
 
-    <MudText Typo="Typo.h5" GutterBottom="true">All Buckets</MudText>
-    @if (buckets is null)
-    {
-        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
-    }
-    else
-    {
-        <MudSimpleTable Elevation="1" Hover="true" Dense="true">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Name</th>
-                    <th>Files</th>
-                    <th>Created</th>
-                    <th>Expires</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var b in buckets)
-                {
+    <div class="terminal-panel anim-fade-in anim-delay-1" style="margin-bottom: 32px;">
+        <div class="terminal-panel-header">
+            <div class="terminal-panel-header-dot"></div>
+            <span class="terminal-panel-header-title">API Keys</span>
+        </div>
+        @if (keys is null)
+        {
+            <div class="sonar-loader">
+                <div class="sonar-ping"><div class="sonar-ping-dot"></div></div>
+            </div>
+        }
+        else
+        {
+            <MudSimpleTable Elevation="0" Hover="true" Dense="true" Style="background: transparent;">
+                <thead>
                     <tr>
-                        <td><MudLink Href="@($"/{b.Id}")">@b.Id</MudLink></td>
-                        <td>@b.Name</td>
-                        <td>@b.FileCount</td>
-                        <td>@b.CreatedAt.ToString("u")</td>
-                        <td>@(b.ExpiresAt?.ToString("u") ?? "Never")</td>
+                        <th>Prefix</th>
+                        <th>Name</th>
+                        <th>Created</th>
+                        <th>Last Used</th>
+                        <th>Buckets</th>
                     </tr>
-                }
-            </tbody>
-        </MudSimpleTable>
-    }
-</MudContainer>
+                </thead>
+                <tbody>
+                    @foreach (var key in keys)
+                    {
+                        <tr>
+                            <td style="font-family: var(--font-mono); color: var(--abyss-cyan);">@key.Prefix</td>
+                            <td>@key.Name</td>
+                            <td>@key.CreatedAt.ToString("u")</td>
+                            <td>@(key.LastUsedAt?.ToString("u") ?? "Never")</td>
+                            <td>@key.BucketCount</td>
+                        </tr>
+                    }
+                </tbody>
+            </MudSimpleTable>
+        }
+    </div>
+
+    <div class="terminal-panel anim-fade-in anim-delay-2">
+        <div class="terminal-panel-header">
+            <div class="terminal-panel-header-dot" style="background: var(--abyss-amber); box-shadow: 0 0 6px var(--abyss-amber-glow);"></div>
+            <span class="terminal-panel-header-title">All Buckets</span>
+        </div>
+        @if (buckets is null)
+        {
+            <div class="sonar-loader">
+                <div class="sonar-ping"><div class="sonar-ping-dot"></div></div>
+            </div>
+        }
+        else
+        {
+            <MudSimpleTable Elevation="0" Hover="true" Dense="true" Style="background: transparent;">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Files</th>
+                        <th>Created</th>
+                        <th>Expires</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var b in buckets)
+                    {
+                        <tr>
+                            <td><a href="/@b.Id" style="color: var(--abyss-cyan); text-decoration: none; font-family: var(--font-mono);">@b.Id</a></td>
+                            <td>@b.Name</td>
+                            <td>@b.FileCount</td>
+                            <td>@b.CreatedAt.ToString("u")</td>
+                            <td>@(b.ExpiresAt?.ToString("u") ?? "Never")</td>
+                        </tr>
+                    }
+                </tbody>
+            </MudSimpleTable>
+        }
+    </div>
+</div>
 
 @code {
     private List<ClawdFiles.Application.DTOs.KeyInfoResponse>? keys;

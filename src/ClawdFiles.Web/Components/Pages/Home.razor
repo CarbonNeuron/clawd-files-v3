@@ -2,7 +2,64 @@
 
 <PageTitle>Clawd Files</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-8">
-    <MudText Typo="Typo.h3" GutterBottom="true">Clawd Files</MudText>
-    <MudText Typo="Typo.body1">A file-sharing platform with bucket-based organization.</MudText>
-</MudContainer>
+<div class="hero-section">
+    <div class="anim-fade-in">
+        <p class="hero-title">
+            File sharing from<br/>the <span class="hero-title-accent">deep</span>.
+        </p>
+    </div>
+    <p class="hero-subtitle anim-fade-in anim-delay-1">
+        Bucket-based file storage with instant sharing, short links, and a clean API.
+        Upload via the REST API, browse and download from the web.
+    </p>
+
+    <div class="hero-terminal anim-fade-in anim-delay-2 scanlines">
+        <div class="hero-terminal-bar">
+            <span class="hero-terminal-dot hero-terminal-dot--red"></span>
+            <span class="hero-terminal-dot hero-terminal-dot--yellow"></span>
+            <span class="hero-terminal-dot hero-terminal-dot--green"></span>
+        </div>
+        <div class="hero-terminal-content">
+            <div><span class="hero-terminal-prompt">$</span> <span class="hero-terminal-cmd">curl -X POST /api/buckets -H "X-Api-Key: cf_..."</span></div>
+            <div class="hero-terminal-output">&nbsp;&nbsp;{ "id": "station-logs-feb", "name": "Station Logs" }</div>
+            <br/>
+            <div><span class="hero-terminal-prompt">$</span> <span class="hero-terminal-cmd">curl -F "file=@@sonar-data.csv" /api/buckets/station-logs-feb/files</span></div>
+            <div class="hero-terminal-output">&nbsp;&nbsp;{ "shortUrl": "<span class="hero-terminal-success">/s/k7x2</span>", "path": "sonar-data.csv" }</div>
+            <br/>
+            <div><span class="hero-terminal-prompt">$</span> <span class="hero-terminal-cmd">curl /api/buckets/station-logs-feb/zip -o <span class="hero-terminal-amber">archive.zip</span></span></div>
+            <div class="hero-terminal-success">&nbsp;&nbsp;Downloaded 3 files (1.2 MB)</div>
+            <div><span class="hero-terminal-prompt">$</span> <span class="hero-terminal-cursor"></span></div>
+        </div>
+    </div>
+
+    <div class="feature-grid anim-fade-in anim-delay-3">
+        <div class="feature-card">
+            <div class="feature-card-icon">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 3h12v2H2V3zm0 4h12v2H2V7zm0 4h8v2H2v-2z" fill="currentColor"/></svg>
+            </div>
+            <div class="feature-card-title">Bucket Organization</div>
+            <div class="feature-card-desc">Group files into named buckets with descriptions, purposes, and expiration dates.</div>
+        </div>
+        <div class="feature-card">
+            <div class="feature-card-icon">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1l2 5h5l-4 3 1.5 5L8 11l-4.5 3L5 9 1 6h5L8 1z" fill="currentColor"/></svg>
+            </div>
+            <div class="feature-card-title">Short Links</div>
+            <div class="feature-card-desc">Every file gets a unique short code. Share files with compact, memorable URLs.</div>
+        </div>
+        <div class="feature-card">
+            <div class="feature-card-icon">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 2a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V6l-4-4H3zm5 0v4h4" stroke="currentColor" stroke-width="1.2" fill="none"/></svg>
+            </div>
+            <div class="feature-card-title">REST API</div>
+            <div class="feature-card-desc">Full CRUD API with key-based auth. Upload, list, download, and manage files programmatically.</div>
+        </div>
+        <div class="feature-card">
+            <div class="feature-card-icon">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 8h8M8 4v8M2 2h12v12H2z" stroke="currentColor" stroke-width="1.2" fill="none"/></svg>
+            </div>
+            <div class="feature-card-title">ZIP Downloads</div>
+            <div class="feature-card-desc">Download an entire bucket as a single ZIP archive with one request.</div>
+        </div>
+    </div>
+</div>

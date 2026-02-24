@@ -5,48 +5,62 @@
 
 <PageTitle>@FilePath</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.Large" Class="mt-8">
+<div style="padding-top: 40px;">
     @if (fileHeader is null)
     {
-        <MudText Typo="Typo.body1">File not found.</MudText>
+        <div class="terminal-panel" style="padding: 40px; text-align: center;">
+            <p style="color: var(--abyss-muted); font-family: var(--font-mono); font-size: 0.85rem;">
+                File not found.
+            </p>
+        </div>
     }
     else
     {
-        <MudText Typo="Typo.h4" GutterBottom="true">@fileHeader.Path</MudText>
-        <div class="d-flex flex-wrap gap-2 mb-4">
-            <MudChip T="string" Color="Color.Default">Type: @fileHeader.ContentType</MudChip>
-            <MudChip T="string" Color="Color.Default">Size: @FormatSize(fileHeader.SizeBytes)</MudChip>
-            <MudChip T="string" Color="Color.Default">Uploaded: @fileHeader.UploadedAt.ToString("u")</MudChip>
-            <MudChip T="string" Color="Color.Info">
-                Short URL: <MudLink Href="@($"/s/{fileHeader.ShortCode}")">/s/@fileHeader.ShortCode</MudLink>
-            </MudChip>
+        <div class="breadcrumb-path anim-fade-in">
+            <a href="/">home</a>
+            <span class="breadcrumb-path-sep">/</span>
+            <a href="/@BucketId">@BucketId</a>
+            <span class="breadcrumb-path-sep">/</span>
+            <span>@fileHeader.Path</span>
+        </div>
+
+        <h1 class="hero-title anim-fade-in" style="font-size: 1.6rem !important; margin-bottom: 16px;">@fileHeader.Path</h1>
+
+        <div class="meta-bar anim-fade-in anim-delay-1" style="margin-bottom: 28px;">
+            <span class="file-badge">@GetShortType(fileHeader.ContentType)</span>
+            <span class="meta-tag">
+                <span class="meta-tag-label">Size</span> @FormatSize(fileHeader.SizeBytes)
+            </span>
+            <span class="meta-tag">
+                <span class="meta-tag-label">Uploaded</span> @fileHeader.UploadedAt.ToString("u")
+            </span>
+            <span class="meta-tag meta-tag--cyan">
+                <span class="meta-tag-label">Short</span>
+                <a href="/s/@fileHeader.ShortCode" style="color: var(--abyss-cyan); text-decoration: none;">/s/@fileHeader.ShortCode</a>
+            </span>
         </div>
 
         @if (fileHeader.ContentType.StartsWith("image/"))
         {
-            <MudImage Src="@($"/raw/{BucketId}/{FilePath}")"
-                      Alt="@fileHeader.Path"
-                      Fluid="true"
-                      Elevation="1"
-                      Class="mb-4" />
+            <div class="image-preview anim-fade-in anim-delay-2" style="margin-bottom: 28px;">
+                <img src="/raw/@BucketId/@FilePath" alt="@fileHeader.Path" />
+            </div>
         }
 
-        <div class="d-flex gap-2">
+        <div class="anim-fade-in anim-delay-3" style="display: flex; gap: 10px;">
             <MudButton Href="@($"/raw/{BucketId}/{FilePath}")"
                        Variant="Variant.Filled"
-                       Color="Color.Primary"
-                       StartIcon="@Icons.Material.Filled.Download">
-                Download
+                       Color="Color.Primary">
+                Download File
             </MudButton>
             <MudButton Href="@($"/{BucketId}")"
                        Variant="Variant.Outlined"
-                       Color="Color.Default"
-                       StartIcon="@Icons.Material.Filled.ArrowBack">
+                       Color="Color.Default">
                 Back to bucket
             </MudButton>
         </div>
     }
-</MudContainer>
+</div>
 
 @code {
     [Parameter] public string BucketId { get; set; } = "";
@@ -67,5 +81,11 @@
         if (bytes >= mb) return $"{bytes / (double)mb:F1} MB";
         if (bytes >= kb) return $"{bytes / (double)kb:F1} KB";
         return $"{bytes} B";
+    }
+
+    private static string GetShortType(string contentType)
+    {
+        var sub = contentType.Contains('/') ? contentType.Split('/')[1] : contentType;
+        return sub.Length > 10 ? sub[..10] : sub;
     }
 }

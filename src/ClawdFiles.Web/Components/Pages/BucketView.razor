@@ -5,71 +5,95 @@
 
 <PageTitle>@(bucket?.Name ?? "Bucket")</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.Large" Class="mt-8">
+<div style="padding-top: 40px;">
     @if (bucket is null)
     {
-        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+        <div class="sonar-loader">
+            <div class="sonar-ping"><div class="sonar-ping-dot"></div></div>
+        </div>
     }
     else
     {
-        <MudText Typo="Typo.h3" GutterBottom="true">@bucket.Name</MudText>
+        <div class="breadcrumb-path anim-fade-in">
+            <a href="/">home</a>
+            <span class="breadcrumb-path-sep">/</span>
+            <span>@bucket.Id</span>
+        </div>
+
+        <h1 class="hero-title" style="font-size: 1.8rem !important; margin-bottom: 8px;">@bucket.Name</h1>
+
         @if (!string.IsNullOrEmpty(bucket.Description))
         {
-            <MudText Typo="Typo.body1" Class="mb-4">@bucket.Description</MudText>
+            <p class="hero-subtitle anim-fade-in anim-delay-1" style="font-size: 1rem !important; margin-bottom: 24px;">@bucket.Description</p>
         }
-        <div class="d-flex flex-wrap gap-2 mb-4">
-            <MudChip T="string" Color="Color.Default">ID: @bucket.Id</MudChip>
+
+        <div class="meta-bar anim-fade-in anim-delay-1" style="margin-bottom: 32px;">
+            <span class="meta-tag">
+                <span class="meta-tag-label">ID</span> @bucket.Id
+            </span>
             @if (!string.IsNullOrEmpty(bucket.Purpose))
             {
-                <MudChip T="string" Color="Color.Info">Purpose: @bucket.Purpose</MudChip>
+                <span class="meta-tag meta-tag--cyan">
+                    <span class="meta-tag-label">Purpose</span> @bucket.Purpose
+                </span>
             }
-            <MudChip T="string" Color="Color.Default">Created: @bucket.CreatedAt.ToString("u")</MudChip>
+            <span class="meta-tag">
+                <span class="meta-tag-label">Created</span> @bucket.CreatedAt.ToString("u")
+            </span>
             @if (bucket.ExpiresAt.HasValue)
             {
-                <MudChip T="string" Color="Color.Warning">Expires: @bucket.ExpiresAt.Value.ToString("u")</MudChip>
+                <span class="meta-tag meta-tag--amber">
+                    <span class="meta-tag-label">Expires</span> @bucket.ExpiresAt.Value.ToString("u")
+                </span>
             }
         </div>
 
-        <MudText Typo="Typo.h5" GutterBottom="true">Files (@bucket.Files.Count)</MudText>
+        <div class="terminal-panel anim-fade-in anim-delay-2">
+            <div class="terminal-panel-header">
+                <div class="terminal-panel-header-dot"></div>
+                <span class="terminal-panel-header-title">Files &mdash; @bucket.Files.Count item@(bucket.Files.Count != 1 ? "s" : "")</span>
+            </div>
 
-        @if (bucket.Files.Count == 0)
-        {
-            <MudText Typo="Typo.body1">No files in this bucket.</MudText>
-        }
-        else
-        {
-            <MudSimpleTable Elevation="1" Hover="true" Dense="true">
-                <thead>
-                    <tr>
-                        <th>Path</th>
-                        <th>Type</th>
-                        <th>Size</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var file in bucket.Files)
-                    {
-                        <tr>
-                            <td><MudLink Href="@($"/{bucket.Id}/{file.Path}")">@file.Path</MudLink></td>
-                            <td>@file.ContentType</td>
-                            <td>@FormatSize(file.SizeBytes)</td>
-                            <td><MudLink Href="@($"/raw/{bucket.Id}/{file.Path}")">Download</MudLink></td>
-                        </tr>
-                    }
-                </tbody>
-            </MudSimpleTable>
+            @if (bucket.Files.Count == 0)
+            {
+                <div class="terminal-panel-body" style="text-align: center; color: var(--abyss-muted); font-family: var(--font-mono); font-size: 0.85rem;">
+                    No files in this bucket.
+                </div>
+            }
+            else
+            {
+                <div class="file-row-header">
+                    <span>Name</span>
+                    <span>Type</span>
+                    <span>Size</span>
+                    <span>Actions</span>
+                </div>
+                @foreach (var file in bucket.Files)
+                {
+                    <div class="file-row">
+                        <div class="file-row-name">
+                            <a href="/@bucket.Id/@file.Path">@file.Path</a>
+                        </div>
+                        <span class="file-badge">@GetShortType(file.ContentType)</span>
+                        <span class="file-row-size">@FormatSize(file.SizeBytes)</span>
+                        <span class="file-row-action"><a href="/raw/@bucket.Id/@file.Path">download</a></span>
+                    </div>
+                }
+            }
+        </div>
 
-            <MudButton Href="@($"/api/buckets/{bucket.Id}/zip")"
-                       Variant="Variant.Filled"
-                       Color="Color.Primary"
-                       StartIcon="@Icons.Material.Filled.Download"
-                       Class="mt-4">
-                Download all as ZIP
-            </MudButton>
+        @if (bucket.Files.Count > 0)
+        {
+            <div style="margin-top: 20px;" class="anim-fade-in anim-delay-3">
+                <MudButton Href="@($"/api/buckets/{bucket.Id}/zip")"
+                           Variant="Variant.Filled"
+                           Color="Color.Primary">
+                    Download all as ZIP
+                </MudButton>
+            </div>
         }
     }
-</MudContainer>
+</div>
 
 @code {
     [Parameter] public string BucketId { get; set; } = "";
@@ -89,5 +113,11 @@
         if (bytes >= mb) return $"{bytes / (double)mb:F1} MB";
         if (bytes >= kb) return $"{bytes / (double)kb:F1} KB";
         return $"{bytes} B";
+    }
+
+    private static string GetShortType(string contentType)
+    {
+        var sub = contentType.Contains('/') ? contentType.Split('/')[1] : contentType;
+        return sub.Length > 10 ? sub[..10] : sub;
     }
 }

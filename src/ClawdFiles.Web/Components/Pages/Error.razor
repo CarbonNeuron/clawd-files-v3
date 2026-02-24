@@ -3,30 +3,34 @@
 
 <PageTitle>Error</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-8">
-    <MudAlert Severity="Severity.Error" Variant="Variant.Filled" Class="mb-4">
-        An error occurred while processing your request.
-    </MudAlert>
+<div style="padding-top: 40px;">
+    <div class="terminal-panel" style="border-color: rgba(239, 68, 68, 0.3);">
+        <div class="terminal-panel-header" style="border-color: rgba(239, 68, 68, 0.2);">
+            <div class="terminal-panel-header-dot" style="background: var(--abyss-danger); box-shadow: 0 0 6px rgba(239, 68, 68, 0.4);"></div>
+            <span class="terminal-panel-header-title" style="color: #fca5a5;">System Error</span>
+        </div>
+        <div class="terminal-panel-body">
+            <p style="color: #fca5a5; font-family: var(--font-mono); font-size: 0.9rem; margin-bottom: 16px;">
+                An error occurred while processing your request.
+            </p>
 
-    @if (ShowRequestId)
-    {
-        <MudText Typo="Typo.body2">
-            <strong>Request ID:</strong> <code>@RequestId</code>
-        </MudText>
-    }
+            @if (ShowRequestId)
+            {
+                <div class="meta-tag" style="margin-bottom: 16px; display: inline-flex;">
+                    <span class="meta-tag-label">Request ID</span>
+                    <code style="color: var(--abyss-text-dim);">@RequestId</code>
+                </div>
+            }
 
-    <MudText Typo="Typo.h6" Class="mt-4" GutterBottom="true">Development Mode</MudText>
-    <MudText Typo="Typo.body2">
-        Swapping to the <strong>Development</strong> environment will display more detailed information about the error that occurred.
-    </MudText>
-    <MudText Typo="Typo.body2" Class="mt-2">
-        <strong>The Development environment shouldn't be enabled for deployed applications.</strong>
-        It can result in displaying sensitive information from exceptions to end users.
-        For local debugging, enable the <strong>Development</strong> environment by setting the
-        <strong>ASPNETCORE_ENVIRONMENT</strong> environment variable to <strong>Development</strong>
-        and restarting the app.
-    </MudText>
-</MudContainer>
+            <hr class="section-rule" />
+
+            <p style="color: var(--abyss-muted); font-size: 0.8rem; line-height: 1.6;">
+                Swapping to the <strong>Development</strong> environment will display more detailed information.
+                The Development environment shouldn't be enabled for deployed applications as it can expose sensitive data.
+            </p>
+        </div>
+    </div>
+</div>
 
 @code{
     [CascadingParameter]
