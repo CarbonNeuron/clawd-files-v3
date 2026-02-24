@@ -37,7 +37,7 @@
         </div>
 
         <div class="meta-bar" style="margin-bottom: 28px;">
-            <span class="file-badge">@GetShortType(fileHeader.ContentType)</span>
+            <span class="file-badge">@GetShortType(fileHeader.Path)</span>
             <span class="meta-tag">
                 <span class="meta-tag-label">Size</span> @FormatSize(fileHeader.SizeBytes)
             </span>
@@ -306,9 +306,11 @@
         return $"{bytes} B";
     }
 
-    private static string GetShortType(string contentType)
+    private static string GetShortType(string path)
     {
-        var sub = contentType.Contains('/') ? contentType.Split('/')[1] : contentType;
-        return sub.Length > 10 ? sub[..10] : sub;
+        var ext = System.IO.Path.GetExtension(path);
+        if (!string.IsNullOrEmpty(ext))
+            return ext[1..].ToLowerInvariant();
+        return "file";
     }
 }

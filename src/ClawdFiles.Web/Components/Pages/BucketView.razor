@@ -74,7 +74,7 @@
                         <div class="file-row-name">
                             <a href="/@bucket.Id/@file.Path">@file.Path</a>
                         </div>
-                        <span class="file-badge">@GetShortType(file.ContentType)</span>
+                        <span class="file-badge">@GetShortType(file.Path)</span>
                         <span class="file-row-size">@FormatSize(file.SizeBytes)</span>
                         <span class="file-row-action">
                             <a href="/raw/@bucket.Id/@file.Path" download="@file.Path" class="file-row-action-icon" title="Download">
@@ -119,9 +119,11 @@
         return $"{bytes} B";
     }
 
-    private static string GetShortType(string contentType)
+    private static string GetShortType(string path)
     {
-        var sub = contentType.Contains('/') ? contentType.Split('/')[1] : contentType;
-        return sub.Length > 10 ? sub[..10] : sub;
+        var ext = System.IO.Path.GetExtension(path);
+        if (!string.IsNullOrEmpty(ext))
+            return ext[1..].ToLowerInvariant();
+        return "file";
     }
 }
