@@ -902,7 +902,7 @@ h1:focus { outline: none; }
     color: var(--abyss-amber);
 }
 .markdown-preview pre {
-    background: #282a36;
+    background: #1e1e1e;
     border: 1px solid var(--abyss-border);
     border-radius: 0.5rem;
     padding: 1rem;
@@ -916,7 +916,7 @@ h1:focus { outline: none; }
     border: none;
     padding: 0;
     font-size: 0.875rem;
-    color: #f8f8f2;
+    color: #d4d4d4;
 }
 .markdown-preview blockquote {
     border-left: 3px solid var(--abyss-cyan-dim);
@@ -1010,22 +1010,22 @@ h1:focus { outline: none; }
     border-bottom: none;
 }
 
-/* Code preview — uses Dracula theme colors */
+/* Code preview — uses DarkPlus theme colors */
 .code-preview {
-    background: #282a36;
+    background: #1e1e1e;
     border: 1px solid var(--abyss-border);
     border-radius: 0.5rem;
     overflow: hidden;
     max-height: 700px;
     overflow-y: auto;
-    color: #f8f8f2;
+    color: #d4d4d4;
 }
 .code-preview pre {
     display: flex;
     margin: 0;
     padding: 1rem;
     overflow-x: auto;
-    background: #282a36 !important;
+    background: #1e1e1e !important;
     font-family: var(--font-mono);
     font-size: 0.875rem;
     line-height: 1.5;
@@ -1036,13 +1036,13 @@ h1:focus { outline: none; }
     padding: 0;
     flex: 1;
     min-width: 0;
-    color: #f8f8f2;
+    color: #d4d4d4;
 }
 .code-line-numbers {
     flex-shrink: 0;
     padding-right: 1rem;
     text-align: right;
-    color: #6272a4;
+    color: #858585;
     user-select: none;
     font-family: var(--font-mono);
     font-size: 0.875rem;
