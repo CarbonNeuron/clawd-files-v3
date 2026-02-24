@@ -873,19 +873,22 @@ h1:focus { outline: none; }
     color: var(--abyss-amber);
 }
 .markdown-preview pre {
-    background: var(--abyss-bg);
+    background: var(--abyss-surface);
     border: 1px solid var(--abyss-border);
-    border-radius: 6px;
-    padding: 16px;
+    border-radius: 0.5rem;
+    padding: 1rem;
     overflow-x: auto;
     margin: 0 0 16px;
+    font-size: 0.875rem;
+    line-height: 1.7;
 }
 .markdown-preview pre code {
-    background: none;
+    background: transparent;
     border: none;
     padding: 0;
-    font-size: 0.82rem;
+    font-size: 0.875rem;
     color: var(--abyss-text-dim);
+    counter-reset: line;
 }
 .markdown-preview blockquote {
     border-left: 3px solid var(--abyss-cyan-dim);
@@ -981,20 +984,42 @@ h1:focus { outline: none; }
 
 /* Code preview */
 .code-preview {
-    background: var(--abyss-bg);
+    background: var(--abyss-surface);
     border: 1px solid var(--abyss-border);
-    border-radius: 6px;
-    padding: 16px;
-    overflow-x: auto;
+    border-radius: 0.5rem;
+    overflow: hidden;
     max-height: 700px;
     overflow-y: auto;
-    font-family: var(--font-mono);
-    font-size: 0.82rem;
-    line-height: 1.6;
 }
-.code-preview div {
-    font-family: var(--font-mono) !important;
-    background: transparent !important;
+.code-preview pre {
+    margin: 0;
+    padding: 1rem;
+    overflow-x: auto;
+    background: var(--abyss-surface) !important;
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    line-height: 1.7;
+}
+.code-preview code {
+    font-family: var(--font-mono);
+    background: transparent;
+    padding: 0;
+    counter-reset: line;
+}
+.code-preview .hljs-ln-line,
+.markdown-preview .hljs-ln-line {
+    display: block;
+    counter-increment: line;
+}
+.code-preview .hljs-ln-line::before,
+.markdown-preview .hljs-ln-line::before {
+    content: counter(line);
+    display: inline-block;
+    width: 1rem;
+    margin-right: 1.5rem;
+    text-align: right;
+    color: var(--abyss-muted);
+    opacity: 0.3;
 }
 
 /* Preview notice (too large) */

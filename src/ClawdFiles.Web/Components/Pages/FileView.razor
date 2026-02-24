@@ -187,7 +187,7 @@
     {
         if (firstRender && previewKind is PreviewKind.Code or PreviewKind.Markdown)
         {
-            await JS.InvokeVoidAsync("hljs.highlightAll");
+            await JS.InvokeVoidAsync("highlightAndAddLines");
         }
     }
 
