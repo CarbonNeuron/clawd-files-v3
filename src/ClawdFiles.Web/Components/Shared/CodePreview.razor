@@ -1,0 +1,139 @@
+@using TextMateSharp.Grammars
+@using TextMateSharp.Registry
+@using TextMateSharp.Themes
+
+<div class="code-preview">
+    <div class="code-preview-header">
+        <div class="code-preview-dots">
+            <span class="code-preview-dot code-preview-dot--amber"></span>
+            <span class="code-preview-dot code-preview-dot--cyan"></span>
+            <span class="code-preview-dot code-preview-dot--muted"></span>
+        </div>
+        <span class="code-preview-filename">@Filename</span>
+    </div>
+    <pre>
+        <div class="code-line-numbers" aria-hidden="true">@lineNumbers</div>
+        <code>@((MarkupString)highlightedHtml)</code>
+    </pre>
+</div>
+
+@code {
+    private static readonly RegistryOptions s_options = new(ThemeName.DarkPlus);
+    private static readonly Registry s_registry = new(s_options);
+
+    [Parameter] public string Content { get; set; } = "";
+    [Parameter] public string FilePath { get; set; } = "";
+
+    private string highlightedHtml = "";
+    private string lineNumbers = "";
+
+    private string Filename => System.IO.Path.GetFileName(FilePath);
+
+    protected override void OnParametersSet()
+    {
+        if (string.IsNullOrEmpty(Content)) return;
+
+        var ext = System.IO.Path.GetExtension(FilePath)?.ToLowerInvariant() ?? "";
+        highlightedHtml = Highlight(Content, ext);
+
+        var lineCount = Content.Split('\n').Length;
+        if (Content.EndsWith('\n')) lineCount--;
+        lineNumbers = string.Join("\n", Enumerable.Range(1, lineCount));
+    }
+
+    /// <summary>
+    /// Highlights code content using TextMateSharp, resolving the grammar from a file extension (e.g. ".cs").
+    /// Returns HTML-encoded text if no grammar is found.
+    /// </summary>
+    public static string Highlight(string content, string ext)
+    {
+        string? scope = null;
+        try { scope = s_options.GetScopeByExtension(ext); } catch { }
+
+        if (string.IsNullOrEmpty(scope))
+            return System.Net.WebUtility.HtmlEncode(content);
+
+        return HighlightWithScope(content, scope);
+    }
+
+    /// <summary>
+    /// Highlights code content using an already-resolved TextMate scope.
+    /// </summary>
+    public static string HighlightWithScope(string content, string scope)
+    {
+        var grammar = s_registry.LoadGrammar(scope);
+        var theme = s_registry.GetTheme();
+        var sb = new System.Text.StringBuilder();
+        var lines = content.Split('\n');
+        IStateStack? ruleStack = null;
+
+        for (int i = 0; i < lines.Length; i++)
+        {
+            var line = lines[i];
+            if (i > 0) sb.Append('\n');
+
+            var result = grammar.TokenizeLine(line, ruleStack, TimeSpan.MaxValue);
+            ruleStack = result.RuleStack;
+
+            if (line.Length == 0) continue;
+
+            foreach (var token in result.Tokens)
+            {
+                var startIndex = Math.Min(token.StartIndex, line.Length);
+                var endIndex = Math.Min(token.EndIndex, line.Length);
+                if (startIndex >= endIndex) continue;
+
+                var tokenText = line[startIndex..endIndex];
+                var fg = ResolveColor(theme, token.Scopes);
+
+                if (fg is not null)
+                    sb.Append($"<span style=\"color:{fg}\">{System.Net.WebUtility.HtmlEncode(tokenText)}</span>");
+                else
+                    sb.Append(System.Net.WebUtility.HtmlEncode(tokenText));
+            }
+        }
+
+        return sb.ToString();
+    }
+
+    /// <summary>
+    /// Resolves a TextMate scope from a language hint (e.g. "csharp", "js").
+    /// Tries extension first, then language ID.
+    /// </summary>
+    public static string? ResolveScopeFromHint(string langHint)
+    {
+        string? scope = null;
+        try { scope = s_options.GetScopeByExtension("." + langHint); } catch { }
+        if (string.IsNullOrEmpty(scope))
+        {
+            try { scope = s_options.GetScopeByLanguageId(langHint); } catch { }
+        }
+        return scope;
+    }
+
+    /// <summary>
+    /// Returns true if TextMateSharp has a grammar for the given file extension (e.g. ".cs").
+    /// </summary>
+    public static bool HasGrammar(string ext)
+    {
+        try
+        {
+            var scope = s_options.GetScopeByExtension(ext);
+            return !string.IsNullOrEmpty(scope);
+        }
+        catch { return false; }
+    }
+
+    private static string? ResolveColor(Theme theme, IList<string> scopes)
+    {
+        string? fg = null;
+        var rules = theme.Match(scopes);
+        foreach (var rule in rules)
+        {
+            var color = theme.GetColor(rule.foreground);
+            if (!string.IsNullOrEmpty(color))
+                fg = color;
+        }
+        return fg;
+    }
+}

@@ -1020,6 +1020,39 @@ h1:focus { outline: none; }
     overflow-y: auto;
     color: #d4d4d4;
 }
+.code-preview-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: rgba(30, 30, 30, 0.8);
+    border-bottom: 1px solid var(--abyss-border);
+}
+.code-preview-dots {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.code-preview-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+.code-preview-dot--amber {
+    background: var(--abyss-amber);
+}
+.code-preview-dot--cyan {
+    background: var(--abyss-cyan);
+}
+.code-preview-dot--muted {
+    background: var(--abyss-muted);
+}
+.code-preview-filename {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--abyss-text-dim);
+    letter-spacing: 0.02em;
+}
 .code-preview pre {
     display: flex;
     margin: 0;

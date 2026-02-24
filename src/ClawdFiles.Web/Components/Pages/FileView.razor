@@ -1,9 +1,6 @@
 @page "/{BucketId}/{*FilePath}"
 @using ClawdFiles.Application.Interfaces
 @using Markdig
-@using TextMateSharp.Grammars
-@using TextMateSharp.Registry
-@using TextMateSharp.Themes
 @inject IFileHeaderRepository FileRepo
 @inject IFileStorage FileStorage
 @rendermode InteractiveServer
@@ -107,12 +104,7 @@
                     break;
 
                 case PreviewKind.Code:
-                    <div class="code-preview">
-                        <pre>
-                            <div class="code-line-numbers" aria-hidden="true">@lineNumbers</div>
-                            <code>@((MarkupString)renderedHtml)</code>
-                        </pre>
-                    </div>
+                    <CodePreview Content="@codeContent" FilePath="@FilePath" />
                     break;
 
                 case PreviewKind.TooLarge:
@@ -139,16 +131,13 @@
 </div>
 
 @code {
-    private static readonly RegistryOptions s_options = new(ThemeName.DarkPlus);
-    private static readonly Registry s_registry = new(s_options);
-
     [Parameter] public string BucketId { get; set; } = "";
     [Parameter] public string FilePath { get; set; } = "";
     private ClawdFiles.Domain.Entities.BucketFileHeader? fileHeader;
 
     private PreviewKind previewKind = PreviewKind.None;
     private string renderedHtml = "";
-    private string lineNumbers = "";
+    private string codeContent = "";
     private List<string[]> csvRows = new();
 
     private const long MaxPreviewBytes = 1024 * 1024; // 1 MB
@@ -183,10 +172,7 @@
                     csvRows = ParseCsv(content);
                     break;
                 case PreviewKind.Code:
-                    renderedHtml = HighlightCode(content, fileHeader.Path);
-                    var lineCount = content.Split('\n').Length;
-                    if (content.EndsWith('\n')) lineCount--;
-                    lineNumbers = string.Join("\n", Enumerable.Range(1, lineCount));
+                    codeContent = content;
                     break;
             }
         }
@@ -203,75 +189,10 @@
         if (ext == ".md" || contentType == "text/markdown") return PreviewKind.Markdown;
         if (ext == ".csv" || contentType == "text/csv") return PreviewKind.Csv;
 
-        if (!string.IsNullOrEmpty(ext))
-        {
-            try
-            {
-                var scope = s_options.GetScopeByExtension(ext);
-                if (!string.IsNullOrEmpty(scope)) return PreviewKind.Code;
-            }
-            catch { }
-        }
+        if (!string.IsNullOrEmpty(ext) && CodePreview.HasGrammar(ext))
+            return PreviewKind.Code;
 
         return PreviewKind.None;
-    }
-
-    private static string HighlightCode(string content, string path)
-    {
-        var ext = System.IO.Path.GetExtension(path)?.ToLowerInvariant() ?? "";
-        string? scope = null;
-        try { scope = s_options.GetScopeByExtension(ext); } catch { }
-
-        if (string.IsNullOrEmpty(scope))
-            return System.Net.WebUtility.HtmlEncode(content);
-
-        var grammar = s_registry.LoadGrammar(scope);
-        var theme = s_registry.GetTheme();
-        var sb = new System.Text.StringBuilder();
-        var lines = content.Split('\n');
-        IStateStack? ruleStack = null;
-
-        for (int i = 0; i < lines.Length; i++)
-        {
-            var line = lines[i];
-            if (i > 0) sb.Append('\n');
-
-            // Always tokenize to maintain grammar state, even for empty lines
-            var result = grammar.TokenizeLine(line, ruleStack, TimeSpan.MaxValue);
-            ruleStack = result.RuleStack;
-
-            if (line.Length == 0) continue;
-
-            foreach (var token in result.Tokens)
-            {
-                var startIndex = Math.Min(token.StartIndex, line.Length);
-                var endIndex = Math.Min(token.EndIndex, line.Length);
-                if (startIndex >= endIndex) continue;
-
-                var tokenText = line[startIndex..endIndex];
-                var fg = ResolveColor(theme, token.Scopes);
-
-                if (fg is not null)
-                    sb.Append($"<span style=\"color:{fg}\">{System.Net.WebUtility.HtmlEncode(tokenText)}</span>");
-                else
-                    sb.Append(System.Net.WebUtility.HtmlEncode(tokenText));
-            }
-        }
-
-        return sb.ToString();
-    }
-
-    private static string? ResolveColor(Theme theme, IList<string> scopes)
-    {
-        string? fg = null;
-        var rules = theme.Match(scopes);
-        foreach (var rule in rules)
-        {
-            var color = theme.GetColor(rule.foreground);
-            if (!string.IsNullOrEmpty(color))
-                fg = color;
-        }
-        return fg;
     }
 
     private static string RenderMarkdown(string markdown)
@@ -297,48 +218,11 @@
             var langHint = match.Groups[1].Value;
             var code = System.Net.WebUtility.HtmlDecode(match.Groups[2].Value);
 
-            string? scope = null;
-            try { scope = s_options.GetScopeByExtension("." + langHint); } catch { }
-            if (string.IsNullOrEmpty(scope))
-            {
-                try { scope = s_options.GetScopeByLanguageId(langHint); } catch { }
-            }
+            var scope = CodePreview.ResolveScopeFromHint(langHint);
             if (string.IsNullOrEmpty(scope)) return match.Value;
 
-            var grammar = s_registry.LoadGrammar(scope);
-            var theme = s_registry.GetTheme();
-            var sb = new System.Text.StringBuilder();
-            var lines = code.Split('\n');
-            IStateStack? ruleStack = null;
-
-            sb.Append("<pre><code>");
-            for (int i = 0; i < lines.Length; i++)
-            {
-                var line = lines[i];
-                if (i > 0) sb.Append('\n');
-
-                var result = grammar.TokenizeLine(line, ruleStack, TimeSpan.MaxValue);
-                ruleStack = result.RuleStack;
-
-                if (line.Length == 0) continue;
-
-                foreach (var token in result.Tokens)
-                {
-                    var startIndex = Math.Min(token.StartIndex, line.Length);
-                    var endIndex = Math.Min(token.EndIndex, line.Length);
-                    if (startIndex >= endIndex) continue;
-
-                    var tokenText = line[startIndex..endIndex];
-                    var fg = ResolveColor(theme, token.Scopes);
-
-                    if (fg is not null)
-                        sb.Append($"<span style=\"color:{fg}\">{System.Net.WebUtility.HtmlEncode(tokenText)}</span>");
-                    else
-                        sb.Append(System.Net.WebUtility.HtmlEncode(tokenText));
-                }
-            }
-            sb.Append("</code></pre>");
-            return sb.ToString();
+            var highlighted = CodePreview.HighlightWithScope(code, scope);
+            return $"<pre><code>{highlighted}</code></pre>";
         });
     }
 
