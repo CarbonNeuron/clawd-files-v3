@@ -236,10 +236,11 @@
             var line = lines[i];
             if (i > 0) sb.Append('\n');
 
-            if (line.Length == 0) continue;
-
+            // Always tokenize to maintain grammar state, even for empty lines
             var result = grammar.TokenizeLine(line, ruleStack, TimeSpan.MaxValue);
             ruleStack = result.RuleStack;
+
+            if (line.Length == 0) continue;
 
             foreach (var token in result.Tokens)
             {
@@ -315,10 +316,11 @@
             {
                 var line = lines[i];
                 if (i > 0) sb.Append('\n');
-                if (line.Length == 0) continue;
 
                 var result = grammar.TokenizeLine(line, ruleStack, TimeSpan.MaxValue);
                 ruleStack = result.RuleStack;
+
+                if (line.Length == 0) continue;
 
                 foreach (var token in result.Tokens)
                 {
