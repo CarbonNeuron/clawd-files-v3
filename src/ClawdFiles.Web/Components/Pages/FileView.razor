@@ -1,0 +1,49 @@
+@page "/{BucketId}/{*FilePath}"
+@using ClawdFiles.Application.Interfaces
+@inject IFileHeaderRepository FileRepo
+@rendermode InteractiveServer
+
+<PageTitle>@FilePath</PageTitle>
+
+@if (fileHeader is null)
+{
+    <p>File not found.</p>
+}
+else
+{
+    <h1>@fileHeader.Path</h1>
+    <div class="file-meta">
+        <span>Type: @fileHeader.ContentType</span>
+        <span> | Size: @FormatSize(fileHeader.SizeBytes)</span>
+        <span> | Uploaded: @fileHeader.UploadedAt.ToString("u")</span>
+        <span> | Short URL: <a href="/s/@fileHeader.ShortCode">/s/@fileHeader.ShortCode</a></span>
+    </div>
+    @if (fileHeader.ContentType.StartsWith("image/"))
+    {
+        <img src="/raw/@BucketId/@FilePath" alt="@fileHeader.Path" style="max-width: 100%;" />
+    }
+    <p><a href="/raw/@BucketId/@FilePath">Download</a></p>
+    <p><a href="/@BucketId">Back to bucket</a></p>
+}
+
+@code {
+    [Parameter] public string BucketId { get; set; } = "";
+    [Parameter] public string FilePath { get; set; } = "";
+    private ClawdFiles.Domain.Entities.BucketFileHeader? fileHeader;
+
+    protected override async Task OnInitializedAsync()
+    {
+        fileHeader = await FileRepo.FindByBucketAndPathAsync(BucketId, FilePath);
+    }
+
+    private static string FormatSize(long bytes)
+    {
+        const long kb = 1024;
+        const long mb = 1024 * 1024;
+        const long gb = 1024 * 1024 * 1024;
+        if (bytes >= gb) return $"{bytes / (double)gb:F1} GB";
+        if (bytes >= mb) return $"{bytes / (double)mb:F1} MB";
+        if (bytes >= kb) return $"{bytes / (double)kb:F1} KB";
+        return $"{bytes} B";
+    }
+}
