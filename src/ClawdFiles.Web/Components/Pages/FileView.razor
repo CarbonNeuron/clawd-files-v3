@@ -1,9 +1,9 @@
 @page "/{BucketId}/{*FilePath}"
 @using ClawdFiles.Application.Interfaces
-@using ColorCode
 @using Markdig
 @inject IFileHeaderRepository FileRepo
 @inject IFileStorage FileStorage
+@inject IJSRuntime JS
 @rendermode InteractiveServer
 
 <PageTitle>@FilePath</PageTitle>
@@ -106,7 +106,7 @@
 
                 case PreviewKind.Code:
                     <div class="code-preview">
-                        @((MarkupString)renderedHtml)
+                        <pre><code class="language-@codeLanguageHint">@codeContent</code></pre>
                     </div>
                     break;
 
@@ -140,6 +140,8 @@
 
     private PreviewKind previewKind = PreviewKind.None;
     private string renderedHtml = "";
+    private string codeContent = "";
+    private string codeLanguageHint = "";
     private List<string[]> csvRows = new();
 
     private const long MaxPreviewBytes = 1024 * 1024; // 1 MB
@@ -174,9 +176,18 @@
                     csvRows = ParseCsv(content);
                     break;
                 case PreviewKind.Code:
-                    renderedHtml = RenderCode(content, fileHeader.Path);
+                    codeContent = content;
+                    codeLanguageHint = GetLanguageHint(fileHeader.Path);
                     break;
             }
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && previewKind is PreviewKind.Code or PreviewKind.Markdown)
+        {
+            await JS.InvokeVoidAsync("hljs.highlightAll");
         }
     }
 
@@ -190,9 +201,60 @@
 
         if (ext == ".md" || contentType == "text/markdown") return PreviewKind.Markdown;
         if (ext == ".csv" || contentType == "text/csv") return PreviewKind.Csv;
-        if (GetCodeLanguage(ext) is not null) return PreviewKind.Code;
+        if (IsCodeExtension(ext)) return PreviewKind.Code;
 
         return PreviewKind.None;
+    }
+
+    private static bool IsCodeExtension(string ext) => ext switch
+    {
+        ".cs" or ".js" or ".ts" or ".tsx" or ".jsx" or ".py" or ".sql" or ".json"
+        or ".xml" or ".yaml" or ".yml" or ".css" or ".html" or ".htm" or ".java"
+        or ".cpp" or ".cc" or ".cxx" or ".h" or ".hpp" or ".c" or ".php"
+        or ".rb" or ".go" or ".rs" or ".swift" or ".kt" or ".scala"
+        or ".sh" or ".bash" or ".ps1" or ".psm1" or ".fs" or ".fsx"
+        or ".vb" or ".lua" or ".r" or ".toml" or ".ini" or ".conf"
+        or ".dockerfile" or ".tf" or ".hcl" => true,
+        _ => false
+    };
+
+    private static string GetLanguageHint(string path)
+    {
+        var ext = System.IO.Path.GetExtension(path)?.ToLowerInvariant() ?? "";
+        return ext switch
+        {
+            ".cs" => "csharp",
+            ".js" or ".jsx" => "javascript",
+            ".ts" or ".tsx" => "typescript",
+            ".py" => "python",
+            ".rb" => "ruby",
+            ".go" => "go",
+            ".rs" => "rust",
+            ".java" => "java",
+            ".cpp" or ".cc" or ".cxx" or ".hpp" => "cpp",
+            ".c" or ".h" => "c",
+            ".php" => "php",
+            ".sql" => "sql",
+            ".json" => "json",
+            ".xml" => "xml",
+            ".yaml" or ".yml" => "yaml",
+            ".css" => "css",
+            ".html" or ".htm" => "html",
+            ".sh" or ".bash" => "bash",
+            ".ps1" or ".psm1" => "powershell",
+            ".fs" or ".fsx" => "fsharp",
+            ".vb" => "vbnet",
+            ".swift" => "swift",
+            ".kt" => "kotlin",
+            ".scala" => "scala",
+            ".lua" => "lua",
+            ".r" => "r",
+            ".toml" => "toml",
+            ".ini" or ".conf" => "ini",
+            ".dockerfile" => "dockerfile",
+            ".tf" or ".hcl" => "hcl",
+            _ => "plaintext"
+        };
     }
 
     private async Task<string?> LoadTextContentAsync()
@@ -212,89 +274,8 @@
             .UseAdvancedExtensions()
             .Build();
 
-        var html = Markdown.ToHtml(markdown, pipeline);
-
-        // Post-process fenced code blocks for syntax highlighting
-        html = HighlightCodeBlocks(html);
-
-        return html;
+        return Markdown.ToHtml(markdown, pipeline);
     }
-
-    private static string HighlightCodeBlocks(string html)
-    {
-        // Markdig outputs <pre><code class="language-xxx">...</code></pre>
-        // We replace the inner content with ColorCode-highlighted HTML
-        var pattern = new System.Text.RegularExpressions.Regex(
-            @"<pre><code\s+class=""language-(\w+)"">([^<]*(?:<(?!/code>)[^<]*)*)</code></pre>",
-            System.Text.RegularExpressions.RegexOptions.Singleline);
-
-        return pattern.Replace(html, match =>
-        {
-            var langHint = match.Groups[1].Value;
-            var code = System.Net.WebUtility.HtmlDecode(match.Groups[2].Value);
-            var language = FindColorCodeLanguage(langHint);
-            if (language is null) return match.Value;
-
-            var formatter = new HtmlFormatter();
-            var highlighted = formatter.GetHtmlString(code, language);
-            return highlighted;
-        });
-    }
-
-    private static string RenderCode(string content, string path)
-    {
-        var ext = System.IO.Path.GetExtension(path)?.ToLowerInvariant() ?? "";
-        var language = GetCodeLanguage(ext);
-        if (language is null)
-            return $"<pre><code>{System.Net.WebUtility.HtmlEncode(content)}</code></pre>";
-
-        var formatter = new HtmlFormatter();
-        return formatter.GetHtmlString(content, language);
-    }
-
-    private static ILanguage? GetCodeLanguage(string ext) => ext switch
-    {
-        ".cs" => Languages.CSharp,
-        ".js" => Languages.JavaScript,
-        ".ts" => Languages.Typescript,
-        ".py" => Languages.Python,
-        ".sql" => Languages.Sql,
-        ".json" => Languages.JavaScript, // JSON highlighted as JS (closest available)
-        ".xml" => Languages.Xml,
-        ".yaml" or ".yml" => Languages.Xml, // closest available
-        ".css" => Languages.Css,
-        ".html" or ".htm" => Languages.Html,
-        ".java" => Languages.Java,
-        ".cpp" or ".cc" or ".cxx" or ".h" or ".hpp" => Languages.Cpp,
-        ".c" => Languages.Cpp, // closest available
-        ".php" => Languages.Php,
-        ".ps1" or ".psm1" => Languages.PowerShell,
-        ".fs" or ".fsx" => Languages.FSharp,
-        ".vb" => Languages.VbDotNet,
-        ".md" => Languages.Markdown,
-        _ => null
-    };
-
-    private static ILanguage? FindColorCodeLanguage(string langHint) => langHint.ToLowerInvariant() switch
-    {
-        "csharp" or "cs" or "c#" => Languages.CSharp,
-        "javascript" or "js" => Languages.JavaScript,
-        "typescript" or "ts" => Languages.Typescript,
-        "python" or "py" => Languages.Python,
-        "sql" => Languages.Sql,
-        "json" => Languages.JavaScript,
-        "xml" => Languages.Xml,
-        "yaml" or "yml" => Languages.Xml,
-        "css" => Languages.Css,
-        "html" or "htm" => Languages.Html,
-        "java" => Languages.Java,
-        "cpp" or "c++" or "c" => Languages.Cpp,
-        "php" => Languages.Php,
-        "powershell" or "ps1" => Languages.PowerShell,
-        "fsharp" or "fs" or "f#" => Languages.FSharp,
-        "vb" or "vbnet" or "vb.net" => Languages.VbDotNet,
-        _ => null
-    };
 
     private static List<string[]> ParseCsv(string content)
     {
@@ -318,9 +299,8 @@
 
             if (line[i] == '"')
             {
-                // Quoted field
                 var sb = new System.Text.StringBuilder();
-                i++; // skip opening quote
+                i++;
                 while (i < line.Length)
                 {
                     if (line[i] == '"')
@@ -332,7 +312,7 @@
                         }
                         else
                         {
-                            i++; // skip closing quote
+                            i++;
                             break;
                         }
                     }
@@ -343,11 +323,10 @@
                     }
                 }
                 fields.Add(sb.ToString());
-                if (i < line.Length && line[i] == ',') i++; // skip delimiter
+                if (i < line.Length && line[i] == ',') i++;
             }
             else
             {
-                // Unquoted field
                 var next = line.IndexOf(',', i);
                 if (next == -1)
                 {
