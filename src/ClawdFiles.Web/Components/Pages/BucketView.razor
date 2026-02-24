@@ -1,0 +1,75 @@
+@page "/{BucketId}"
+@using ClawdFiles.Application.Services
+@inject BucketService BucketService
+@rendermode InteractiveServer
+
+<PageTitle>@(bucket?.Name ?? "Bucket")</PageTitle>
+
+@if (bucket is null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <h1>@bucket.Name</h1>
+    @if (!string.IsNullOrEmpty(bucket.Description))
+    {
+        <p>@bucket.Description</p>
+    }
+    <div class="bucket-meta">
+        <span>ID: @bucket.Id</span>
+        @if (!string.IsNullOrEmpty(bucket.Purpose))
+        {
+            <span> | Purpose: @bucket.Purpose</span>
+        }
+        <span> | Created: @bucket.CreatedAt.ToString("u")</span>
+        @if (bucket.ExpiresAt.HasValue)
+        {
+            <span> | Expires: @bucket.ExpiresAt.Value.ToString("u")</span>
+        }
+    </div>
+    <h2>Files (@bucket.Files.Count)</h2>
+    @if (bucket.Files.Count == 0)
+    {
+        <p>No files in this bucket.</p>
+    }
+    else
+    {
+        <table>
+            <thead><tr><th>Path</th><th>Type</th><th>Size</th><th>Actions</th></tr></thead>
+            <tbody>
+                @foreach (var file in bucket.Files)
+                {
+                    <tr>
+                        <td><a href="/@bucket.Id/@file.Path">@file.Path</a></td>
+                        <td>@file.ContentType</td>
+                        <td>@FormatSize(file.SizeBytes)</td>
+                        <td><a href="/raw/@bucket.Id/@file.Path">Download</a></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        <p><a href="/api/buckets/@bucket.Id/zip">Download all as ZIP</a></p>
+    }
+}
+
+@code {
+    [Parameter] public string BucketId { get; set; } = "";
+    private ClawdFiles.Application.DTOs.BucketResponse? bucket;
+
+    protected override async Task OnInitializedAsync()
+    {
+        bucket = await BucketService.GetBucketAsync(BucketId);
+    }
+
+    private static string FormatSize(long bytes)
+    {
+        const long kb = 1024;
+        const long mb = 1024 * 1024;
+        const long gb = 1024 * 1024 * 1024;
+        if (bytes >= gb) return $"{bytes / (double)gb:F1} GB";
+        if (bytes >= mb) return $"{bytes / (double)mb:F1} MB";
+        if (bytes >= kb) return $"{bytes / (double)kb:F1} KB";
+        return $"{bytes} B";
+    }
+}
