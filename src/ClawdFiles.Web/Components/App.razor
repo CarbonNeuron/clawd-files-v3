@@ -32,7 +32,7 @@
                 if (lines[lines.length - 1] === '') lines.pop();
                 block.innerHTML = lines.map(function (line) {
                     return '<span class="hljs-ln-line">' + line + '</span>';
-                }).join('\n');
+                }).join('');
             });
         }
     </script>
