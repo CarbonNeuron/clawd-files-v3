@@ -20,7 +20,10 @@ public class EfApiKeyRepository(ClawdFilesDbContext db) : IApiKeyRepository
         => await db.ApiKeys.Include(k => k.Buckets).FirstOrDefaultAsync(k => k.KeyHash == keyHash, ct);
 
     public async Task<List<ApiKey>> ListAllAsync(CancellationToken ct = default)
-        => await db.ApiKeys.Include(k => k.Buckets).OrderByDescending(k => k.CreatedAt).ToListAsync(ct);
+    {
+        var keys = await db.ApiKeys.Include(k => k.Buckets).ToListAsync(ct);
+        return keys.OrderByDescending(k => k.CreatedAt).ToList();
+    }
 
     public async Task DeleteAsync(ApiKey key, CancellationToken ct = default)
     { db.ApiKeys.Remove(key); await db.SaveChangesAsync(ct); }
