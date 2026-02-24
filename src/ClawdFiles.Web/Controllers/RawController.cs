@@ -14,6 +14,9 @@ public class RawController(IFileStorage storage, IFileHeaderRepository fileRepo)
         if (header is null) return NotFound(new ErrorResponse("File not found"));
         var stream = await storage.GetFileStreamAsync(bucketId, filePath);
         if (stream is null) return NotFound(new ErrorResponse("File not found on disk"));
-        return File(stream, header.ContentType, enableRangeProcessing: true);
+        var contentType = string.IsNullOrWhiteSpace(header.ContentType)
+            ? "application/octet-stream"
+            : header.ContentType;
+        return File(stream, contentType, enableRangeProcessing: true);
     }
 }
