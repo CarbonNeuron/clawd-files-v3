@@ -2,6 +2,35 @@
    ABYSSAL TERMINAL — Deep-sea research station interface
    ============================================================ */
 
+@font-face {
+    font-family: 'JetBrains Mono';
+    src: url('fonts/JetBrainsMono-Regular.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'JetBrains Mono';
+    src: url('fonts/JetBrainsMono-Italic.woff2') format('woff2');
+    font-weight: 400;
+    font-style: italic;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'JetBrains Mono';
+    src: url('fonts/JetBrainsMono-SemiBold.woff2') format('woff2');
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'JetBrains Mono';
+    src: url('fonts/JetBrainsMono-SemiBoldItalic.woff2') format('woff2');
+    font-weight: 600;
+    font-style: italic;
+    font-display: swap;
+}
+
 :root {
     --abyss-bg: #06090f;
     --abyss-surface: #0d1520;
@@ -20,7 +49,7 @@
     --abyss-muted: #64748b;
     --abyss-danger: #ef4444;
     --abyss-success: #22c55e;
-    --font-mono: ui-monospace, "Cascadia Code", "SF Mono", Menlo, Consolas, monospace;
+    --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Code", "SF Mono", Menlo, Consolas, monospace;
     --font-sans: ui-sans-serif, system-ui, -apple-system, sans-serif;
     --glow-cyan: 0 0 12px rgba(34, 211, 238, 0.2);
     --glow-cyan-strong: 0 0 20px rgba(34, 211, 238, 0.3), 0 0 40px rgba(34, 211, 238, 0.1);
