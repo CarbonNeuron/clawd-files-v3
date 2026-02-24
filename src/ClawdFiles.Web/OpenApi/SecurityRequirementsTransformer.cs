@@ -15,20 +15,21 @@ public sealed class SecuritySchemeTransformer : IOpenApiDocumentTransformer
         CancellationToken cancellationToken)
     {
         var components = document.Components ??= new OpenApiComponents();
+        document.Components.SecuritySchemes ??= new Dictionary<string, IOpenApiSecurityScheme>();
 
-        components.SecuritySchemes!["ApiKey"] = new OpenApiSecurityScheme
+        document.Components.SecuritySchemes.Add("ApiKey", new OpenApiSecurityScheme
         {
             Type = SecuritySchemeType.Http,
             Scheme = "bearer",
             Description = "Any valid API key (regular or admin). Pass as: `Authorization: Bearer <key>`",
-        };
-
-        components.SecuritySchemes!["AdminKey"] = new OpenApiSecurityScheme
+        });
+        
+        document.Components.SecuritySchemes.Add("AdminKey", new OpenApiSecurityScheme
         {
             Type = SecuritySchemeType.Http,
             Scheme = "bearer",
             Description = "Admin API key required. Pass as: `Authorization: Bearer <admin-key>`",
-        };
+        });
 
         return Task.CompletedTask;
     }
