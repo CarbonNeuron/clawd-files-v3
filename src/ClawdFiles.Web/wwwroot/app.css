@@ -888,7 +888,6 @@ h1:focus { outline: none; }
     padding: 0;
     font-size: 0.875rem;
     color: var(--abyss-text-dim);
-    counter-reset: line;
 }
 .markdown-preview blockquote {
     border-left: 3px solid var(--abyss-cyan-dim);
@@ -1006,22 +1005,19 @@ h1:focus { outline: none; }
     font-family: var(--font-mono);
     background: transparent;
     padding: 0;
-    counter-reset: line;
+    flex: 1;
+    min-width: 0;
 }
-.code-preview .hljs-ln-line,
-.markdown-preview .hljs-ln-line {
-    display: block;
-    counter-increment: line;
-}
-.code-preview .hljs-ln-line::before,
-.markdown-preview .hljs-ln-line::before {
-    content: counter(line);
-    display: inline-block;
-    width: 1rem;
-    margin-right: 1.5rem;
+.hljs-line-numbers {
+    flex-shrink: 0;
+    padding-right: 1rem;
     text-align: right;
     color: var(--abyss-muted);
     opacity: 0.3;
+    user-select: none;
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    line-height: 1.5;
 }
 
 /* Preview notice (too large) */

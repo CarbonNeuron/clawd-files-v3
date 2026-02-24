@@ -21,18 +21,24 @@
     <script src="@Assets["_content/MudBlazor/MudBlazor.min.js"]"></script>
     <script src="lib/hljs/highlight.min.js"></script>
     <script>
-        // Highlight code blocks and wrap lines for CSS counter line numbers.
-        // innerHTML is used here on highlight.js's own trusted output (already
-        // sanitized tokens), not on user-supplied HTML.
         function highlightAndAddLines() {
             document.querySelectorAll('pre code[class*="language-"]').forEach(function (block) {
                 if (block.dataset.highlighted) return;
                 hljs.highlightElement(block);
-                var lines = block.innerHTML.split('\n');
-                if (lines[lines.length - 1] === '') lines.pop();
-                block.innerHTML = lines.map(function (line) {
-                    return '<span class="hljs-ln-line">' + line + '</span>';
-                }).join('');
+
+                var lineCount = block.textContent.split('\n').length;
+                if (block.textContent.endsWith('\n')) lineCount--;
+
+                var gutter = document.createElement('div');
+                gutter.className = 'hljs-line-numbers';
+                gutter.setAttribute('aria-hidden', 'true');
+                var nums = [];
+                for (var i = 1; i <= lineCount; i++) nums.push(i);
+                gutter.textContent = nums.join('\n');
+
+                var pre = block.parentElement;
+                pre.style.display = 'flex';
+                pre.insertBefore(gutter, block);
             });
         }
     </script>
