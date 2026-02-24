@@ -372,7 +372,7 @@ h1:focus { outline: none; }
 /* File row — terminal-style file listing */
 .file-row {
     display: grid;
-    grid-template-columns: 1fr auto auto auto;
+    grid-template-columns: 1fr 80px 80px 48px;
     gap: 16px;
     align-items: center;
     padding: 10px 16px;
@@ -391,11 +391,16 @@ h1:focus { outline: none; }
     display: flex;
     align-items: center;
     gap: 10px;
+    min-width: 0;
+    overflow: hidden;
 }
 .file-row-name a {
     color: var(--abyss-text);
     text-decoration: none;
     transition: color 0.2s ease, text-shadow 0.2s ease;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 .file-row-name a:hover {
     color: var(--abyss-cyan);
@@ -419,10 +424,26 @@ h1:focus { outline: none; }
     background: rgba(34, 211, 238, 0.08);
 }
 
+/* File row action icon */
+.file-row-action-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--abyss-cyan-dim);
+    text-decoration: none;
+    padding: 4px;
+    border-radius: 4px;
+    transition: color 0.2s ease, background 0.2s ease;
+}
+.file-row-action-icon:hover {
+    color: var(--abyss-cyan);
+    background: rgba(34, 211, 238, 0.1);
+}
+
 /* File row header */
 .file-row-header {
     display: grid;
-    grid-template-columns: 1fr auto auto auto;
+    grid-template-columns: 1fr 80px 80px 48px;
     gap: 16px;
     padding: 8px 16px;
     border-bottom: 1px solid var(--abyss-border);
@@ -777,6 +798,215 @@ h1:focus { outline: none; }
 .anim-delay-2 { animation-delay: 0.2s; }
 .anim-delay-3 { animation-delay: 0.3s; }
 .anim-delay-4 { animation-delay: 0.4s; }
+
+/* Video preview */
+.video-preview {
+    background: var(--abyss-surface);
+    border: 1px solid var(--abyss-border);
+    border-radius: 6px;
+    padding: 12px;
+    display: inline-block;
+}
+
+/* Markdown preview — full typography */
+.markdown-preview {
+    background: var(--abyss-surface);
+    border: 1px solid var(--abyss-border);
+    border-radius: 6px;
+    padding: 24px 28px;
+    font-family: var(--font-sans);
+    font-size: 0.9rem;
+    line-height: 1.7;
+    color: var(--abyss-text);
+    overflow-x: auto;
+}
+.markdown-preview h1 {
+    font-family: var(--font-mono);
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--abyss-text);
+    margin: 0 0 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--abyss-border);
+}
+.markdown-preview h2 {
+    font-family: var(--font-mono);
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: var(--abyss-text);
+    margin: 28px 0 12px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--abyss-border);
+}
+.markdown-preview h3 {
+    font-family: var(--font-mono);
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--abyss-text);
+    margin: 24px 0 8px;
+}
+.markdown-preview h4 {
+    font-family: var(--font-mono);
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--abyss-text-dim);
+    margin: 20px 0 6px;
+}
+.markdown-preview p {
+    margin: 0 0 14px;
+}
+.markdown-preview a {
+    color: var(--abyss-cyan);
+    text-decoration: none;
+    transition: text-shadow 0.2s ease;
+}
+.markdown-preview a:hover {
+    text-shadow: 0 0 8px var(--abyss-cyan-glow);
+}
+.markdown-preview code {
+    font-family: var(--font-mono);
+    font-size: 0.85em;
+    background: rgba(26, 45, 64, 0.6);
+    border: 1px solid var(--abyss-border);
+    border-radius: 3px;
+    padding: 1px 5px;
+    color: var(--abyss-amber);
+}
+.markdown-preview pre {
+    background: var(--abyss-bg);
+    border: 1px solid var(--abyss-border);
+    border-radius: 6px;
+    padding: 16px;
+    overflow-x: auto;
+    margin: 0 0 16px;
+}
+.markdown-preview pre code {
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 0.82rem;
+    color: var(--abyss-text-dim);
+}
+.markdown-preview blockquote {
+    border-left: 3px solid var(--abyss-cyan-dim);
+    margin: 0 0 14px;
+    padding: 4px 16px;
+    color: var(--abyss-text-dim);
+    background: rgba(34, 211, 238, 0.04);
+    border-radius: 0 4px 4px 0;
+}
+.markdown-preview ul,
+.markdown-preview ol {
+    margin: 0 0 14px;
+    padding-left: 24px;
+}
+.markdown-preview li {
+    margin-bottom: 4px;
+}
+.markdown-preview table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0 0 16px;
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+}
+.markdown-preview th {
+    background: rgba(13, 21, 32, 0.8);
+    color: var(--abyss-cyan);
+    font-weight: 600;
+    text-align: left;
+    padding: 8px 12px;
+    border: 1px solid var(--abyss-border);
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
+}
+.markdown-preview td {
+    padding: 6px 12px;
+    border: 1px solid var(--abyss-border);
+    color: var(--abyss-text-dim);
+}
+.markdown-preview img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+}
+.markdown-preview hr {
+    border: none;
+    border-top: 1px solid var(--abyss-border);
+    margin: 24px 0;
+}
+
+/* CSV preview */
+.csv-preview-wrapper {
+    background: var(--abyss-surface);
+    border: 1px solid var(--abyss-border);
+    border-radius: 6px;
+    overflow: auto;
+    max-height: 600px;
+}
+.csv-preview {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+}
+.csv-preview thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: rgba(13, 21, 32, 0.95);
+    color: var(--abyss-cyan);
+    font-weight: 600;
+    text-align: left;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--abyss-border);
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+}
+.csv-preview tbody td {
+    padding: 7px 14px;
+    border-bottom: 1px solid rgba(26, 45, 64, 0.4);
+    color: var(--abyss-text-dim);
+    white-space: nowrap;
+}
+.csv-preview tbody tr:hover {
+    background: rgba(34, 211, 238, 0.04);
+}
+.csv-preview tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Code preview */
+.code-preview {
+    background: var(--abyss-bg);
+    border: 1px solid var(--abyss-border);
+    border-radius: 6px;
+    padding: 16px;
+    overflow-x: auto;
+    max-height: 700px;
+    overflow-y: auto;
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    line-height: 1.6;
+}
+.code-preview div {
+    font-family: var(--font-mono) !important;
+    background: transparent !important;
+}
+
+/* Preview notice (too large) */
+.preview-notice {
+    background: rgba(249, 115, 22, 0.08);
+    border: 1px solid rgba(249, 115, 22, 0.3);
+    border-radius: 6px;
+    padding: 16px 20px;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--abyss-amber);
+}
 
 /* ---- Blazor internals ---- */
 

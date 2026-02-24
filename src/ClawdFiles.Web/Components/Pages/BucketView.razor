@@ -76,7 +76,11 @@
                         </div>
                         <span class="file-badge">@GetShortType(file.ContentType)</span>
                         <span class="file-row-size">@FormatSize(file.SizeBytes)</span>
-                        <span class="file-row-action"><a href="/raw/@bucket.Id/@file.Path">download</a></span>
+                        <span class="file-row-action">
+                            <a href="/raw/@bucket.Id/@file.Path" download="@file.Path" class="file-row-action-icon" title="Download">
+                                <MudIcon Icon="@Icons.Material.Filled.FileDownload" Size="Size.Small" />
+                            </a>
+                        </span>
                     </div>
                 }
             }

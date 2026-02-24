@@ -1,6 +1,9 @@
 @page "/{BucketId}/{*FilePath}"
 @using ClawdFiles.Application.Interfaces
+@using ColorCode
+@using Markdig
 @inject IFileHeaderRepository FileRepo
+@inject IFileStorage FileStorage
 @rendermode InteractiveServer
 
 <PageTitle>@FilePath</PageTitle>
@@ -40,12 +43,80 @@
             </span>
         </div>
 
-        @if (fileHeader.ContentType.StartsWith("image/"))
-        {
-            <div class="image-preview anim-fade-in anim-delay-2" style="margin-bottom: 28px;">
-                <img src="/raw/@BucketId/@FilePath" alt="@fileHeader.Path" />
-            </div>
-        }
+        @* === Preview section === *@
+        <div class="anim-fade-in anim-delay-2" style="margin-bottom: 28px;">
+            @switch (previewKind)
+            {
+                case PreviewKind.Image:
+                    <div class="image-preview">
+                        <img src="/raw/@BucketId/@FilePath" alt="@fileHeader.Path" />
+                    </div>
+                    break;
+
+                case PreviewKind.Video:
+                    <div class="video-preview">
+                        <video controls preload="metadata" style="max-width: 100%; max-height: 600px; display: block;">
+                            <source src="/raw/@BucketId/@FilePath" type="@fileHeader.ContentType" />
+                        </video>
+                    </div>
+                    break;
+
+                case PreviewKind.Audio:
+                    <div style="padding: 8px 0;">
+                        <audio controls style="width: 100%; max-width: 500px;">
+                            <source src="/raw/@BucketId/@FilePath" type="@fileHeader.ContentType" />
+                        </audio>
+                    </div>
+                    break;
+
+                case PreviewKind.Markdown:
+                    <div class="markdown-preview">
+                        @((MarkupString)renderedHtml)
+                    </div>
+                    break;
+
+                case PreviewKind.Csv:
+                    <div class="csv-preview-wrapper">
+                        <table class="csv-preview">
+                            @if (csvRows.Count > 0)
+                            {
+                                <thead>
+                                    <tr>
+                                        @foreach (var cell in csvRows[0])
+                                        {
+                                            <th>@cell</th>
+                                        }
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var row in csvRows.Skip(1))
+                                    {
+                                        <tr>
+                                            @foreach (var cell in row)
+                                            {
+                                                <td>@cell</td>
+                                            }
+                                        </tr>
+                                    }
+                                </tbody>
+                            }
+                        </table>
+                    </div>
+                    break;
+
+                case PreviewKind.Code:
+                    <div class="code-preview">
+                        @((MarkupString)renderedHtml)
+                    </div>
+                    break;
+
+                case PreviewKind.TooLarge:
+                    <div class="preview-notice">
+                        File too large for preview (max 1 MB for text-based previews).
+                    </div>
+                    break;
+            }
+        </div>
 
         <div class="anim-fade-in anim-delay-3" style="display: flex; gap: 10px;">
             <MudButton Href="@($"/raw/{BucketId}/{FilePath}")"
@@ -67,9 +138,227 @@
     [Parameter] public string FilePath { get; set; } = "";
     private ClawdFiles.Domain.Entities.BucketFileHeader? fileHeader;
 
+    private PreviewKind previewKind = PreviewKind.None;
+    private string renderedHtml = "";
+    private List<string[]> csvRows = new();
+
+    private const long MaxPreviewBytes = 1024 * 1024; // 1 MB
+    private const int MaxCsvRows = 500;
+
+    private enum PreviewKind { None, Image, Video, Audio, Markdown, Csv, Code, TooLarge }
+
     protected override async Task OnInitializedAsync()
     {
         fileHeader = await FileRepo.FindByBucketAndPathAsync(BucketId, FilePath);
+        if (fileHeader is null) return;
+
+        previewKind = Classify(fileHeader.ContentType, fileHeader.Path);
+
+        if (previewKind is PreviewKind.Markdown or PreviewKind.Csv or PreviewKind.Code)
+        {
+            if (fileHeader.SizeBytes > MaxPreviewBytes)
+            {
+                previewKind = PreviewKind.TooLarge;
+                return;
+            }
+
+            var content = await LoadTextContentAsync();
+            if (content is null) { previewKind = PreviewKind.None; return; }
+
+            switch (previewKind)
+            {
+                case PreviewKind.Markdown:
+                    renderedHtml = RenderMarkdown(content);
+                    break;
+                case PreviewKind.Csv:
+                    csvRows = ParseCsv(content);
+                    break;
+                case PreviewKind.Code:
+                    renderedHtml = RenderCode(content, fileHeader.Path);
+                    break;
+            }
+        }
+    }
+
+    private static PreviewKind Classify(string contentType, string path)
+    {
+        if (contentType.StartsWith("image/")) return PreviewKind.Image;
+        if (contentType.StartsWith("video/")) return PreviewKind.Video;
+        if (contentType.StartsWith("audio/")) return PreviewKind.Audio;
+
+        var ext = System.IO.Path.GetExtension(path)?.ToLowerInvariant() ?? "";
+
+        if (ext == ".md" || contentType == "text/markdown") return PreviewKind.Markdown;
+        if (ext == ".csv" || contentType == "text/csv") return PreviewKind.Csv;
+        if (GetCodeLanguage(ext) is not null) return PreviewKind.Code;
+
+        return PreviewKind.None;
+    }
+
+    private async Task<string?> LoadTextContentAsync()
+    {
+        await using var stream = await FileStorage.GetFileStreamAsync(BucketId, FilePath);
+        if (stream is null) return null;
+        using var reader = new StreamReader(stream);
+        var buffer = new char[MaxPreviewBytes];
+        var read = await reader.ReadBlockAsync(buffer, 0, buffer.Length);
+        return new string(buffer, 0, read);
+    }
+
+    private static string RenderMarkdown(string markdown)
+    {
+        var pipeline = new MarkdownPipelineBuilder()
+            .DisableHtml()
+            .UseAdvancedExtensions()
+            .Build();
+
+        var html = Markdown.ToHtml(markdown, pipeline);
+
+        // Post-process fenced code blocks for syntax highlighting
+        html = HighlightCodeBlocks(html);
+
+        return html;
+    }
+
+    private static string HighlightCodeBlocks(string html)
+    {
+        // Markdig outputs <pre><code class="language-xxx">...</code></pre>
+        // We replace the inner content with ColorCode-highlighted HTML
+        var pattern = new System.Text.RegularExpressions.Regex(
+            @"<pre><code\s+class=""language-(\w+)"">([^<]*(?:<(?!/code>)[^<]*)*)</code></pre>",
+            System.Text.RegularExpressions.RegexOptions.Singleline);
+
+        return pattern.Replace(html, match =>
+        {
+            var langHint = match.Groups[1].Value;
+            var code = System.Net.WebUtility.HtmlDecode(match.Groups[2].Value);
+            var language = FindColorCodeLanguage(langHint);
+            if (language is null) return match.Value;
+
+            var formatter = new HtmlFormatter();
+            var highlighted = formatter.GetHtmlString(code, language);
+            return highlighted;
+        });
+    }
+
+    private static string RenderCode(string content, string path)
+    {
+        var ext = System.IO.Path.GetExtension(path)?.ToLowerInvariant() ?? "";
+        var language = GetCodeLanguage(ext);
+        if (language is null)
+            return $"<pre><code>{System.Net.WebUtility.HtmlEncode(content)}</code></pre>";
+
+        var formatter = new HtmlFormatter();
+        return formatter.GetHtmlString(content, language);
+    }
+
+    private static ILanguage? GetCodeLanguage(string ext) => ext switch
+    {
+        ".cs" => Languages.CSharp,
+        ".js" => Languages.JavaScript,
+        ".ts" => Languages.Typescript,
+        ".py" => Languages.Python,
+        ".sql" => Languages.Sql,
+        ".json" => Languages.JavaScript, // JSON highlighted as JS (closest available)
+        ".xml" => Languages.Xml,
+        ".yaml" or ".yml" => Languages.Xml, // closest available
+        ".css" => Languages.Css,
+        ".html" or ".htm" => Languages.Html,
+        ".java" => Languages.Java,
+        ".cpp" or ".cc" or ".cxx" or ".h" or ".hpp" => Languages.Cpp,
+        ".c" => Languages.Cpp, // closest available
+        ".php" => Languages.Php,
+        ".ps1" or ".psm1" => Languages.PowerShell,
+        ".fs" or ".fsx" => Languages.FSharp,
+        ".vb" => Languages.VbDotNet,
+        ".md" => Languages.Markdown,
+        _ => null
+    };
+
+    private static ILanguage? FindColorCodeLanguage(string langHint) => langHint.ToLowerInvariant() switch
+    {
+        "csharp" or "cs" or "c#" => Languages.CSharp,
+        "javascript" or "js" => Languages.JavaScript,
+        "typescript" or "ts" => Languages.Typescript,
+        "python" or "py" => Languages.Python,
+        "sql" => Languages.Sql,
+        "json" => Languages.JavaScript,
+        "xml" => Languages.Xml,
+        "yaml" or "yml" => Languages.Xml,
+        "css" => Languages.Css,
+        "html" or "htm" => Languages.Html,
+        "java" => Languages.Java,
+        "cpp" or "c++" or "c" => Languages.Cpp,
+        "php" => Languages.Php,
+        "powershell" or "ps1" => Languages.PowerShell,
+        "fsharp" or "fs" or "f#" => Languages.FSharp,
+        "vb" or "vbnet" or "vb.net" => Languages.VbDotNet,
+        _ => null
+    };
+
+    private static List<string[]> ParseCsv(string content)
+    {
+        var rows = new List<string[]>();
+        using var reader = new StringReader(content);
+        string? line;
+        while ((line = reader.ReadLine()) is not null && rows.Count < MaxCsvRows)
+        {
+            rows.Add(ParseCsvLine(line));
+        }
+        return rows;
+    }
+
+    private static string[] ParseCsvLine(string line)
+    {
+        var fields = new List<string>();
+        var i = 0;
+        while (i <= line.Length)
+        {
+            if (i == line.Length) { fields.Add(""); break; }
+
+            if (line[i] == '"')
+            {
+                // Quoted field
+                var sb = new System.Text.StringBuilder();
+                i++; // skip opening quote
+                while (i < line.Length)
+                {
+                    if (line[i] == '"')
+                    {
+                        if (i + 1 < line.Length && line[i + 1] == '"')
+                        {
+                            sb.Append('"');
+                            i += 2;
+                        }
+                        else
+                        {
+                            i++; // skip closing quote
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        sb.Append(line[i]);
+                        i++;
+                    }
+                }
+                fields.Add(sb.ToString());
+                if (i < line.Length && line[i] == ',') i++; // skip delimiter
+            }
+            else
+            {
+                // Unquoted field
+                var next = line.IndexOf(',', i);
+                if (next == -1)
+                {
+                    fields.Add(line[i..]);
+                    break;
+                }
+                fields.Add(line[i..next]);
+                i = next + 1;
+            }
+        }
+        return fields.ToArray();
     }
 
     private static string FormatSize(long bytes)
