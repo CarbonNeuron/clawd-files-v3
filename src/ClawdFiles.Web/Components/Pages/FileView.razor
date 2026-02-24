@@ -26,7 +26,15 @@
             <span>@fileHeader.Path</span>
         </div>
 
-        <h1 class="hero-title" style="font-size: 1.6rem !important; margin-bottom: 16px;">@fileHeader.Path</h1>
+        <div class="file-header">
+            <h1 class="hero-title" style="font-size: 1.6rem !important; margin-bottom: 0;">@fileHeader.Path</h1>
+            <MudButton Href="@($"/raw/{BucketId}/{FilePath}")"
+                       Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       Size="Size.Small">
+                Download
+            </MudButton>
+        </div>
 
         <div class="meta-bar" style="margin-bottom: 28px;">
             <span class="file-badge">@GetShortType(fileHeader.ContentType)</span>
@@ -115,18 +123,6 @@
             }
         </div>
 
-        <div style="display: flex; gap: 10px;">
-            <MudButton Href="@($"/raw/{BucketId}/{FilePath}")"
-                       Variant="Variant.Filled"
-                       Color="Color.Primary">
-                Download File
-            </MudButton>
-            <MudButton Href="@($"/{BucketId}")"
-                       Variant="Variant.Outlined"
-                       Color="Color.Default">
-                Back to bucket
-            </MudButton>
-        </div>
     }
 </div>
 

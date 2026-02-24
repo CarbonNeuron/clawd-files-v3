@@ -786,6 +786,15 @@ h1:focus { outline: none; }
     color: var(--abyss-border-light);
 }
 
+/* File header — title + download */
+.file-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
 /* ---- Animations ---- */
 
 @keyframes sonar-wave {
