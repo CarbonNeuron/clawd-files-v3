@@ -4,6 +4,7 @@ using ClawdFiles.Infrastructure.Data;
 using ClawdFiles.Web.Authentication;
 using ClawdFiles.Web.Components;
 using Microsoft.EntityFrameworkCore;
+using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,6 +29,8 @@ builder.Services.AddControllers();
 // Blazor
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+builder.Services.AddOpenApi(options => options.AddScalarTransformers());
 
 var app = builder.Build();
 
@@ -57,6 +60,13 @@ app.MapControllers();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
+
+if (app.Environment.IsDevelopment())
+{
+    app.MapOpenApi();
+    app.MapScalarApiReference();
+}
+
 
 app.Run();
 
