@@ -2,6 +2,7 @@ using ClawdFiles.Application.Services;
 using ClawdFiles.Infrastructure;
 using ClawdFiles.Infrastructure.Data;
 using ClawdFiles.Web.Authentication;
+using ClawdFiles.Web.OpenApi;
 using ClawdFiles.Web.Components;
 using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
@@ -34,7 +35,12 @@ builder.Services.AddMudServices();
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-builder.Services.AddOpenApi(options => options.AddScalarTransformers());
+builder.Services.AddOpenApi(options =>
+{
+    options.AddScalarTransformers();
+    options.AddDocumentTransformer<SecuritySchemeTransformer>();
+    options.AddOperationTransformer<SecurityRequirementsTransformer>();
+});
 
 var app = builder.Build();
 
