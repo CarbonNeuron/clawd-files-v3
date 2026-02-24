@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/ClawdFiles.Application/ClawdFiles.Application.csproj" />
+    <Project Path="src/ClawdFiles.Domain/ClawdFiles.Domain.csproj" />
+    <Project Path="src/ClawdFiles.Infrastructure/ClawdFiles.Infrastructure.csproj" />
+    <Project Path="src/ClawdFiles.Web/ClawdFiles.Web.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/ClawdFiles.Tests/ClawdFiles.Tests.csproj" />
+  </Folder>
+</Solution>
