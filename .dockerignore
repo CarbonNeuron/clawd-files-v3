@@ -1,0 +1,13 @@
+.git
+bin/
+obj/
+.vs/
+.vscode/
+.idea/
+*.db
+*.db-shm
+*.db-wal
+storage/
+docs/
+.github/
+*.md
