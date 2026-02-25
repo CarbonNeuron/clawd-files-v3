@@ -182,6 +182,7 @@
 
         var ext = System.IO.Path.GetExtension(path)?.ToLowerInvariant() ?? "";
 
+        if (ext == ".txt" || contentType == "text/plain") return PreviewKind.Code; 
         if (ext == ".md" || contentType == "text/markdown") return PreviewKind.Markdown;
         if (ext == ".csv" || contentType == "text/csv") return PreviewKind.Csv;
 
